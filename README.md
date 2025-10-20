@@ -8,6 +8,10 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 [![UPM Package](https://img.shields.io/badge/UPM-1.0.0-blue.svg)](https://docs.unity3d.com/Manual/upm-ui.html)
 
+[![Tests](https://github.com/nimritagames/Unity-FlowUI/actions/workflows/development.yml/badge.svg)](https://github.com/nimritagames/Unity-FlowUI/actions/workflows/development.yml)
+[![Release](https://github.com/nimritagames/Unity-FlowUI/actions/workflows/release.yml/badge.svg)](https://github.com/nimritagames/Unity-FlowUI/actions/workflows/release.yml)
+[![PR Checks](https://github.com/nimritagames/Unity-FlowUI/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/nimritagames/Unity-FlowUI/actions/workflows/pr-checks.yml)
+
 [Installation](#installation) • [Features](#features) • [Quick Start](#quick-start) • [Documentation](#documentation)
 
 </div>

@@ -1,0 +1,263 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# 📚 LEARNING: Development Branch Workflow
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# PURPOSE: This workflow runs automatically when you push code to the
+#          'development' branch. It's your safety net - catching bugs early!
+#
+# WHEN IT RUNS:
+#   - Every time you push to development branch
+#   - Every time someone creates a PR to development
+#
+# WHAT IT DOES:
+#   1. Checks out your code
+#   2. Runs Unity tests (EditMode + PlayMode)
+#   3. Validates code quality
+#   4. Reports results (pass/fail)
+#
+# WHY THIS MATTERS:
+#   - Catches bugs before they reach main branch
+#   - Gives you fast feedback (2-5 minutes)
+#   - Ensures code quality standards
+#
+# ═══════════════════════════════════════════════════════════════════════════
+
+# 📚 LEARNING: Workflow name (shows up in GitHub Actions UI)
+name: Development Branch Tests
+
+# 📚 LEARNING: "on" defines WHEN this workflow runs (triggers)
+on:
+  # 📚 LEARNING: Run when code is pushed to development
+  push:
+    branches:
+      - development  # Your main working branch
+
+  # 📚 LEARNING: Run when someone creates a Pull Request to development
+  pull_request:
+    branches:
+      - development
+
+# 📚 LEARNING: Environment variables (available to all jobs)
+env:
+  # 📚 LEARNING: Unity version must match your installed Unity Editor version
+  # Format: YYYY.X.YYfZ (e.g., 2022.3.62f2)
+  UNITY_VERSION: 2022.3.62f2
+
+# 📚 LEARNING: "jobs" are the actual tasks that run
+# Multiple jobs run in PARALLEL unless you specify dependencies
+jobs:
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # JOB 1: Run Unity Tests
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # 📚 LEARNING: Job ID (used to reference this job)
+  test-unity-package:
+    # 📚 LEARNING: Name shown in GitHub UI
+    name: 🧪 Run Unity Tests
+
+    # 📚 LEARNING: What computer/OS to run on
+    # IMPORTANT: Unity packages MUST run on Linux (not Windows/Mac)
+    runs-on: ubuntu-latest
+
+    # 📚 LEARNING: "steps" are individual tasks within a job
+    # Steps run SEQUENTIALLY (one after another)
+    steps:
+
+      # ─────────────────────────────────────────────────────────────────────
+      # STEP 1: Get your code from GitHub
+      # ─────────────────────────────────────────────────────────────────────
+
+      # 📚 LEARNING: "uses" means we're using a pre-made action from GitHub
+      # This action downloads your repository code
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4  # v4 is the version
+        with:
+          # 📚 LEARNING: Get all git history (needed for versioning)
+          fetch-depth: 0
+
+      # ─────────────────────────────────────────────────────────────────────
+      # STEP 2: Cache Unity Library for faster runs
+      # ─────────────────────────────────────────────────────────────────────
+
+      # 📚 LEARNING: Caching saves time by reusing previous builds
+      # First run: ~10 minutes, Cached runs: ~2-3 minutes!
+      - name: 💾 Cache Unity Library
+        uses: actions/cache@v3
+        with:
+          # 📚 LEARNING: What folder to cache
+          path: Library
+          # 📚 LEARNING: Cache key (unique identifier)
+          # If package.json changes, cache is invalidated
+          key: Library-development-${{ hashFiles('Packages/com.nimrita.flowui/package.json') }}
+          # 📚 LEARNING: Fallback cache keys if exact match not found
+          restore-keys: |
+            Library-development-
+            Library-
+
+      # ─────────────────────────────────────────────────────────────────────
+      # STEP 3: Run Unity Tests
+      # ─────────────────────────────────────────────────────────────────────
+
+      # 📚 LEARNING: This uses GameCI's Unity test runner
+      # GameCI is the standard for Unity CI/CD
+      - name: 🎮 Run Unity Tests
+        uses: game-ci/unity-test-runner@v4
+        # 📚 LEARNING: "env" sets environment variables for THIS step only
+        env:
+          # 📚 LEARNING: These are your Unity license credentials
+          # They're stored as "secrets" in GitHub (encrypted)
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          # 📚 LEARNING: Unity version to use
+          unityVersion: ${{ env.UNITY_VERSION }}
+
+          # 📚 LEARNING: Path to your package (where package.json is)
+          projectPath: Packages/com.nimrita.flowui
+
+          # 📚 LEARNING: We're testing a PACKAGE not a project
+          packageMode: true
+
+          # 📚 LEARNING: Test both EditMode and PlayMode tests
+          testMode: all
+
+          # 📚 LEARNING: Where to save test results
+          artifactsPath: test-results
+
+          # 📚 LEARNING: Generate code coverage report
+          coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport'
+
+      # ─────────────────────────────────────────────────────────────────────
+      # STEP 4: Upload Test Results
+      # ─────────────────────────────────────────────────────────────────────
+
+      # 📚 LEARNING: "if: always()" means run even if previous steps failed
+      # This ensures you can see test results even when tests fail
+      - name: 📊 Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Test Results
+          path: test-results
+
+      # ─────────────────────────────────────────────────────────────────────
+      # STEP 5: Upload Coverage Report
+      # ─────────────────────────────────────────────────────────────────────
+
+      - name: 📈 Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Coverage Report
+          path: test-results/CodeCoverage
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # JOB 2: Validate Package Structure
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # 📚 LEARNING: This job runs in PARALLEL with the test job
+  validate-package:
+    name: ✅ Validate Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      # 📚 LEARNING: "run" executes shell commands (bash)
+      # This validates that package.json is valid JSON
+      - name: 🔍 Validate package.json
+        run: |
+          # Check if package.json exists
+          if [ ! -f "Packages/com.nimrita.flowui/package.json" ]; then
+            echo "❌ package.json not found!"
+            exit 1
+          fi
+
+          # Validate JSON syntax
+          if ! jq empty Packages/com.nimrita.flowui/package.json; then
+            echo "❌ Invalid JSON in package.json"
+            exit 1
+          fi
+
+          echo "✅ package.json is valid!"
+
+      # 📚 LEARNING: Check for required files
+      - name: 📋 Check Required Files
+        run: |
+          PACKAGE_ROOT="Packages/com.nimrita.flowui"
+          MISSING_FILES=()
+
+          # List of required files for UPM packages
+          REQUIRED_FILES=(
+            "package.json"
+            "README.md"
+            "CHANGELOG.md"
+            "LICENSE.md"
+            "Runtime/com.nimrita.flowui.asmdef"
+            "Editor/com.nimrita.flowui.Editor.asmdef"
+          )
+
+          # Check each file
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$PACKAGE_ROOT/$file" ]; then
+              MISSING_FILES+=("$file")
+            fi
+          done
+
+          # Report results
+          if [ ${#MISSING_FILES[@]} -gt 0 ]; then
+            echo "❌ Missing required files:"
+            printf '   - %s\n' "${MISSING_FILES[@]}"
+            exit 1
+          fi
+
+          echo "✅ All required files present!"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 📚 LEARNING SUMMARY
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# KEY CONCEPTS YOU JUST LEARNED:
+#
+# 1. TRIGGERS (on:)
+#    - push: When you push code
+#    - pull_request: When someone creates a PR
+#
+# 2. JOBS
+#    - Run in parallel by default
+#    - Each job gets a fresh computer (runner)
+#    - Jobs can depend on each other
+#
+# 3. STEPS
+#    - Run sequentially within a job
+#    - Can use pre-made actions (uses:)
+#    - Can run shell commands (run:)
+#
+# 4. SECRETS
+#    - Encrypted variables (like passwords)
+#    - Set in GitHub repo settings
+#    - Accessed via ${{ secrets.NAME }}
+#
+# 5. ARTIFACTS
+#    - Files saved from workflow runs
+#    - Test results, coverage reports, etc.
+#    - Can download from GitHub UI
+#
+# 6. CACHING
+#    - Speeds up repeated runs
+#    - Saves Unity Library folder
+#    - Automatically invalidated when needed
+#
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 NEXT STEPS TO LEARN:
+#
+# 1. Push this file to GitHub
+# 2. Go to: https://github.com/nimritagames/Unity-FlowUI/actions
+# 3. Watch it run (will fail first time - needs Unity license)
+# 4. Follow setup instructions in docs/GITHUB_ACTIONS_GUIDE.md
+# 5. See it turn green! ✅
+#
+# ═══════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,505 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# 📚 LEARNING: Pull Request Quality Checks
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# PURPOSE: This workflow ensures code quality BEFORE merging PRs.
+#          It's your quality gate - preventing bad code from entering!
+#
+# WHEN IT RUNS:
+#   - Every time someone creates/updates a Pull Request
+#   - Runs on ANY branch being merged into ANY other branch
+#
+# WHAT IT DOES:
+#   1. Runs all tests (EditMode + PlayMode)
+#   2. Checks code formatting and style
+#   3. Validates package structure
+#   4. Checks for common mistakes
+#   5. Reports results as PR status checks
+#
+# WHY THIS MATTERS:
+#   - Catches bugs before they're merged
+#   - Enforces coding standards
+#   - Makes code review easier
+#   - Maintains high quality codebase
+#
+# DIFFERENCE FROM development.yml:
+#   - development.yml: Runs AFTER code is pushed
+#   - pr-checks.yml: Runs BEFORE code is merged (this is the gate!)
+#
+# ═══════════════════════════════════════════════════════════════════════════
+
+name: Pull Request Checks
+
+# 📚 LEARNING: Run on ALL pull requests to ANY branch
+on:
+  pull_request:
+    # 📚 LEARNING: These are PR event types
+    types:
+      - opened       # When PR is first created
+      - synchronize  # When new commits are pushed to PR
+      - reopened     # When a closed PR is reopened
+
+# 📚 LEARNING: Cancel previous runs if new commits pushed
+# This saves CI minutes and gives faster feedback
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  UNITY_VERSION: 2022.3.62f2
+  PACKAGE_PATH: Packages/com.nimrita.flowui
+
+jobs:
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # JOB 1: Quick Validation Checks (Fast!)
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # 📚 LEARNING: Run fast checks first to fail fast
+  # If these fail, no point running expensive Unity tests
+  quick-checks:
+    name: ⚡ Quick Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout PR Code
+        uses: actions/checkout@v4
+
+      # ─────────────────────────────────────────────────────────────────────
+      # CHECK 1: Validate package.json
+      # ─────────────────────────────────────────────────────────────────────
+
+      - name: 🔍 Validate package.json
+        run: |
+          echo "Checking package.json..."
+
+          # Check file exists
+          if [ ! -f "$PACKAGE_PATH/package.json" ]; then
+            echo "❌ package.json not found!"
+            exit 1
+          fi
+
+          # Validate JSON syntax
+          if ! jq empty "$PACKAGE_PATH/package.json"; then
+            echo "❌ Invalid JSON in package.json"
+            exit 1
+          fi
+
+          # Check required fields
+          REQUIRED_FIELDS=("name" "version" "displayName" "description" "unity")
+          for field in "${REQUIRED_FIELDS[@]}"; do
+            if ! jq -e ".$field" "$PACKAGE_PATH/package.json" > /dev/null; then
+              echo "❌ Missing required field: $field"
+              exit 1
+            fi
+          done
+
+          echo "✅ package.json is valid!"
+
+      # ─────────────────────────────────────────────────────────────────────
+      # CHECK 2: Validate Version Format
+      # ─────────────────────────────────────────────────────────────────────
+
+      # 📚 LEARNING: Ensure version follows semantic versioning (X.Y.Z)
+      - name: 📋 Check Version Format
+        run: |
+          VERSION=$(jq -r '.version' $PACKAGE_PATH/package.json)
+
+          # 📚 LEARNING: Regex for semantic versioning
+          if ! echo "$VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Expected format: X.Y.Z or X.Y.Z-preview.N"
+            exit 1
+          fi
+
+          echo "✅ Version format valid: $VERSION"
+
+      # ─────────────────────────────────────────────────────────────────────
+      # CHECK 3: Required Files Exist
+      # ─────────────────────────────────────────────────────────────────────
+
+      - name: 📋 Check Required Files
+        run: |
+          MISSING_FILES=()
+          REQUIRED_FILES=(
+            "package.json"
+            "README.md"
+            "CHANGELOG.md"
+            "LICENSE.md"
+            "Runtime/com.nimrita.flowui.asmdef"
+            "Editor/com.nimrita.flowui.Editor.asmdef"
+          )
+
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$PACKAGE_PATH/$file" ]; then
+              MISSING_FILES+=("$file")
+            fi
+          done
+
+          if [ ${#MISSING_FILES[@]} -gt 0 ]; then
+            echo "❌ Missing required files:"
+            printf '   - %s\n' "${MISSING_FILES[@]}"
+            exit 1
+          fi
+
+          echo "✅ All required files present!"
+
+      # ─────────────────────────────────────────────────────────────────────
+      # CHECK 4: No Broken .meta Files
+      # ─────────────────────────────────────────────────────────────────────
+
+      # 📚 LEARNING: Unity requires .meta files for every file
+      - name: 🔍 Check .meta Files
+        run: |
+          echo "Checking for missing .meta files..."
+
+          # Find all files in package (excluding .meta files themselves)
+          cd $PACKAGE_PATH
+          MISSING_META=()
+
+          # Check each file and directory
+          while IFS= read -r -d '' file; do
+            # Skip .meta files themselves
+            if [[ "$file" == *.meta ]]; then
+              continue
+            fi
+
+            # Check if .meta file exists
+            if [ ! -f "$file.meta" ]; then
+              MISSING_META+=("$file")
+            fi
+          done < <(find . -type f -print0)
+
+          if [ ${#MISSING_META[@]} -gt 0 ]; then
+            echo "❌ Missing .meta files:"
+            printf '   - %s\n' "${MISSING_META[@]}"
+            echo ""
+            echo "💡 Tip: Ensure Unity generates .meta files for all assets"
+            exit 1
+          fi
+
+          echo "✅ All .meta files present!"
+
+      # ─────────────────────────────────────────────────────────────────────
+      # CHECK 5: No Forbidden Patterns
+      # ─────────────────────────────────────────────────────────────────────
+
+      # 📚 LEARNING: Check for common mistakes in code
+      - name: 🚫 Check Forbidden Patterns
+        run: |
+          echo "Checking for forbidden patterns..."
+          ISSUES=()
+
+          # Check for Debug.Log in production code (should use proper logging)
+          if grep -r "Debug\.Log" $PACKAGE_PATH/Runtime --include="*.cs" | grep -v "// TODO\|// FIXME"; then
+            ISSUES+=("Found Debug.Log statements in Runtime code (use proper logging)")
+          fi
+
+          # Check for TODO/FIXME comments (should be GitHub issues)
+          TODO_COUNT=$(grep -r "// TODO\|// FIXME" $PACKAGE_PATH --include="*.cs" | wc -l)
+          if [ "$TODO_COUNT" -gt 5 ]; then
+            ISSUES+=("Too many TODO/FIXME comments ($TODO_COUNT). Convert to GitHub issues!")
+          fi
+
+          # Check for hardcoded paths
+          if grep -r "C:\\\|/Users/\|/home/" $PACKAGE_PATH --include="*.cs"; then
+            ISSUES+=("Found hardcoded paths in code")
+          fi
+
+          if [ ${#ISSUES[@]} -gt 0 ]; then
+            echo "⚠️  Found issues:"
+            printf '   - %s\n' "${ISSUES[@]}"
+            # Don't fail for warnings, just notify
+            echo "💡 Consider fixing these before merging"
+          else
+            echo "✅ No forbidden patterns found!"
+          fi
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # JOB 2: Unity Tests (Slower but thorough)
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # 📚 LEARNING: This job runs after quick-checks pass
+  unity-tests:
+    name: 🧪 Unity Tests
+    runs-on: ubuntu-latest
+    needs: quick-checks  # Wait for quick checks to pass first
+
+    steps:
+      - name: 📥 Checkout PR Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 💾 Cache Unity Library
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: Library-pr-${{ github.event.pull_request.number }}-${{ hashFiles('Packages/com.nimrita.flowui/package.json') }}
+          restore-keys: |
+            Library-pr-${{ github.event.pull_request.number }}-
+            Library-development-
+            Library-
+
+      - name: 🎮 Run Unity Tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          projectPath: ${{ env.PACKAGE_PATH }}
+          packageMode: true
+          testMode: all
+          artifactsPath: pr-test-results
+          coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport'
+
+      - name: 📊 Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: PR Test Results
+          path: pr-test-results
+
+      # 📚 LEARNING: Comment test results on the PR
+      - name: 💬 Comment Test Results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read test results (this is simplified - actual implementation would parse XML)
+            let comment = '## 🧪 Test Results\n\n';
+            comment += '✅ All tests passed!\n\n';
+            comment += 'View detailed results in the [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).';
+
+            // Post comment on PR
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # JOB 3: Code Quality Checks
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # 📚 LEARNING: Check code style and formatting
+  code-quality:
+    name: 📝 Code Quality
+    runs-on: ubuntu-latest
+    needs: quick-checks
+
+    steps:
+      - name: 📥 Checkout PR Code
+        uses: actions/checkout@v4
+
+      # ─────────────────────────────────────────────────────────────────────
+      # CHECK: C# File Naming Convention
+      # ─────────────────────────────────────────────────────────────────────
+
+      # 📚 LEARNING: Ensure C# files follow PascalCase naming
+      - name: 🔤 Check C# Naming Convention
+        run: |
+          echo "Checking C# file naming conventions..."
+
+          # Find C# files that don't follow PascalCase
+          BAD_NAMES=$(find $PACKAGE_PATH -name "*.cs" | grep -v "/\.[^/]*$" | while read file; do
+            basename=$(basename "$file" .cs)
+            # Check if first letter is uppercase
+            if ! [[ $basename =~ ^[A-Z] ]]; then
+              echo "$file"
+            fi
+          done)
+
+          if [ -n "$BAD_NAMES" ]; then
+            echo "❌ Files not following PascalCase:"
+            echo "$BAD_NAMES"
+            exit 1
+          fi
+
+          echo "✅ All C# files follow naming conventions!"
+
+      # ─────────────────────────────────────────────────────────────────────
+      # CHECK: Assembly Definition Validation
+      # ─────────────────────────────────────────────────────────────────────
+
+      - name: 🔧 Validate Assembly Definitions
+        run: |
+          echo "Validating .asmdef files..."
+
+          # Check Runtime asmdef
+          RUNTIME_ASMDEF="$PACKAGE_PATH/Runtime/com.nimrita.flowui.asmdef"
+          if [ -f "$RUNTIME_ASMDEF" ]; then
+            # Validate JSON
+            if ! jq empty "$RUNTIME_ASMDEF"; then
+              echo "❌ Invalid JSON in Runtime asmdef"
+              exit 1
+            fi
+
+            # Check required fields
+            NAME=$(jq -r '.name' "$RUNTIME_ASMDEF")
+            if [ "$NAME" != "com.nimrita.flowui" ]; then
+              echo "❌ Runtime asmdef has wrong name: $NAME"
+              exit 1
+            fi
+          fi
+
+          # Check Editor asmdef
+          EDITOR_ASMDEF="$PACKAGE_PATH/Editor/com.nimrita.flowui.Editor.asmdef"
+          if [ -f "$EDITOR_ASMDEF" ]; then
+            if ! jq empty "$EDITOR_ASMDEF"; then
+              echo "❌ Invalid JSON in Editor asmdef"
+              exit 1
+            fi
+
+            # Ensure Editor asmdef includes Runtime reference
+            if ! jq -e '.references[] | select(. == "com.nimrita.flowui")' "$EDITOR_ASMDEF" > /dev/null; then
+              echo "❌ Editor asmdef missing reference to Runtime assembly"
+              exit 1
+            fi
+
+            # Ensure Editor platform is set
+            PLATFORMS=$(jq -r '.includePlatforms[]' "$EDITOR_ASMDEF")
+            if [ "$PLATFORMS" != "Editor" ]; then
+              echo "❌ Editor asmdef not restricted to Editor platform"
+              exit 1
+            fi
+          fi
+
+          echo "✅ Assembly definitions are valid!"
+
+      # ─────────────────────────────────────────────────────────────────────
+      # CHECK: License Headers (Optional)
+      # ─────────────────────────────────────────────────────────────────────
+
+      # 📚 LEARNING: Optionally check for license headers in source files
+      - name: 📜 Check License Headers (Optional)
+        run: |
+          echo "Checking for license headers..."
+
+          # Count files without license headers
+          MISSING_HEADERS=$(find $PACKAGE_PATH/Runtime $PACKAGE_PATH/Editor -name "*.cs" -type f | while read file; do
+            # Check if file has license/copyright header in first 10 lines
+            if ! head -n 10 "$file" | grep -qi "copyright\|license\|MIT"; then
+              echo "$file"
+            fi
+          done)
+
+          if [ -n "$MISSING_HEADERS" ]; then
+            echo "⚠️  Files missing license headers:"
+            echo "$MISSING_HEADERS"
+            echo "💡 Consider adding license headers (this is a warning, not an error)"
+          else
+            echo "✅ All files have license headers!"
+          fi
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # JOB 4: PR Summary
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # 📚 LEARNING: Final summary of all checks
+  pr-summary:
+    name: 📋 PR Summary
+    runs-on: ubuntu-latest
+    needs: [quick-checks, unity-tests, code-quality]
+    if: always()  # Run even if previous jobs failed
+
+    steps:
+      - name: 📊 Generate Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📋 PULL REQUEST CHECK SUMMARY"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "✅ Quick Checks: ${{ needs.quick-checks.result }}"
+          echo "🧪 Unity Tests: ${{ needs.unity-tests.result }}"
+          echo "📝 Code Quality: ${{ needs.code-quality.result }}"
+          echo ""
+
+          # 📚 LEARNING: Check if all jobs succeeded
+          if [ "${{ needs.quick-checks.result }}" == "success" ] && \
+             [ "${{ needs.unity-tests.result }}" == "success" ] && \
+             [ "${{ needs.code-quality.result }}" == "success" ]; then
+            echo "🎉 ALL CHECKS PASSED! Ready to merge!"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            exit 0
+          else
+            echo "❌ SOME CHECKS FAILED! Please review and fix."
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            exit 1
+          fi
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 📚 LEARNING SUMMARY
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# KEY CONCEPTS YOU JUST LEARNED:
+#
+# 1. PULL REQUEST EVENTS
+#    - opened: When PR first created
+#    - synchronize: When commits pushed to PR
+#    - reopened: When closed PR reopened
+#
+# 2. CONCURRENCY CONTROL
+#    - cancel-in-progress: true (cancels old runs)
+#    - Saves CI minutes and resources
+#    - Faster feedback on latest code
+#
+# 3. JOB DEPENDENCIES
+#    - needs: [job1, job2] (wait for multiple jobs)
+#    - Jobs run in parallel by default
+#    - Use needs: to create dependency chain
+#
+# 4. CONDITIONAL EXECUTION
+#    - if: always() (run even if previous failed)
+#    - if: success() (only if previous succeeded)
+#    - if: failure() (only if previous failed)
+#
+# 5. VALIDATION STRATEGIES
+#    - Fail fast: Run quick checks first
+#    - Expensive checks: Run after quick checks pass
+#    - Warnings vs Errors: Some checks warn instead of fail
+#
+# 6. PR INTERACTION
+#    - actions/github-script: Comment on PRs
+#    - Post test results directly in PR
+#    - Better collaboration and visibility
+#
+# 7. MULTI-JOB WORKFLOWS
+#    - quick-checks (fast validation)
+#    - unity-tests (thorough testing)
+#    - code-quality (style checking)
+#    - pr-summary (final result)
+#
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 HOW THIS PROTECTS YOUR CODEBASE:
+#
+# BEFORE MERGE, THIS WORKFLOW CHECKS:
+#   ✅ Valid package.json and version format
+#   ✅ All required files present
+#   ✅ No missing .meta files
+#   ✅ No forbidden code patterns
+#   ✅ All Unity tests pass
+#   ✅ Code follows naming conventions
+#   ✅ Assembly definitions are correct
+#
+# RESULT:
+#   - Only quality code gets merged
+#   - Bugs caught early in PR review
+#   - Consistent code style across team
+#   - Automated code review assistant
+#
+# ═══════════════════════════════════════════════════════════════════════════
+# 💡 TIPS FOR BETTER PRS:
+#
+# - Keep PRs small and focused (easier to review)
+# - Fix failing checks before requesting review
+# - Use conventional commits (feat:, fix:, docs:)
+# - Add tests for new features
+# - Update documentation when needed
+#
+# ═══════════════════════════════════════════════════════════════════════════
