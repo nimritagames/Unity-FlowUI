@@ -1,0 +1,91 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# 📚 LEARNING: Unity License Activation Helper
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# PURPOSE: Generate a Unity activation file (.alf) needed to get your license
+#
+# HOW TO USE:
+#   1. Go to Actions tab on GitHub
+#   2. Click "Get Unity Activation File" in left sidebar
+#   3. Click "Run workflow" button
+#   4. Wait ~30 seconds for it to complete
+#   5. Download the .alf file from artifacts
+#   6. Use that file at https://license.unity3d.com/manual
+#
+# NOTE: This is a ONE-TIME setup workflow. You can delete it after getting
+#       your license file!
+#
+# ═══════════════════════════════════════════════════════════════════════════
+
+name: Get Unity Activation File
+
+# 📚 LEARNING: Manual trigger (workflow_dispatch) + auto-trigger on first push
+# This adds a "Run workflow" button in GitHub UI
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - development
+    paths:
+      - '.github/workflows/get-activation-file.yml'
+
+jobs:
+  request-activation-file:
+    name: 📄 Request Unity Activation File
+    runs-on: ubuntu-latest
+
+    steps:
+      # ─────────────────────────────────────────────────────────────────────
+      # STEP 1: Request activation file from Unity
+      # ─────────────────────────────────────────────────────────────────────
+
+      - name: 🎮 Request Unity Activation File
+        id: get-alf
+        uses: game-ci/unity-request-activation-file@v2
+        with:
+          unityVersion: 2022.3
+
+      # ─────────────────────────────────────────────────────────────────────
+      # STEP 2: Upload the activation file
+      # ─────────────────────────────────────────────────────────────────────
+
+      - name: 📤 Upload Activation File
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unity-Activation-File
+          path: ${{ steps.get-alf.outputs.filePath }}
+
+      # ─────────────────────────────────────────────────────────────────────
+      # STEP 3: Show next steps
+      # ─────────────────────────────────────────────────────────────────────
+
+      - name: 📋 Next Steps
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ ACTIVATION FILE GENERATED!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "📥 NEXT STEPS:"
+          echo ""
+          echo "1. Download the .alf file from artifacts (scroll down)"
+          echo ""
+          echo "2. Go to: https://license.unity3d.com/manual"
+          echo ""
+          echo "3. Upload the .alf file"
+          echo ""
+          echo "4. Select 'Unity Personal' (free)"
+          echo ""
+          echo "5. Download the .ulf license file"
+          echo ""
+          echo "6. Follow the guide in docs/GITHUB_ACTIONS_GUIDE.md"
+          echo "   to add the license to GitHub Secrets"
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 📚 AFTER YOU GET YOUR LICENSE:
+#
+# You can delete this file! It's only needed once for initial setup.
+#
+# Or keep it around in case you need to regenerate the license in the future.
+# ═══════════════════════════════════════════════════════════════════════════
