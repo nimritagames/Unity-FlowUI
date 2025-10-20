@@ -2,7 +2,7 @@
 // AUTO-GENERATED CODE - DO NOT MODIFY
 // ========================================
 // Scene: SampleScene
-// Generated: 2025-10-05 20:58:50
+// Generated: 2025-10-06 10:48:17
 // UI Framework v2.0 - Dot Notation
 // ========================================
 
@@ -86,21 +86,40 @@ namespace CodeSculptLabs.UIFramework.SampleScene
                 }
             }
 
-            #region InputField
+            #region Button
 
             /// <summary>
-            /// Username_InputField (InputField)
+            /// Button (Button)
             /// </summary>
-            public static InputField Username_InputField
+            public static Button Button
             {
                 get
                 {
                     if (_manager == null)
                     {
-                        Debug.LogError("[UI] UIManager not initialized! Cannot access Username_InputField");
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Button");
                         return null;
                     }
-                    return _manager.GetUIComponent<InputField>("UI_Canvas/Login_Panel/Login_Panel_Username_InputField");
+                    return _manager.GetUIComponent<Button>("UI_Canvas/Login_Panel/Submit_Button");
+                }
+            }
+            #endregion
+
+            #region InputField
+
+            /// <summary>
+            /// InputField (InputField)
+            /// </summary>
+            public static InputField InputField
+            {
+                get
+                {
+                    if (_manager == null)
+                    {
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access InputField");
+                        return null;
+                    }
+                    return _manager.GetUIComponent<InputField>("UI_Canvas/Login_Panel/Login_Username_InputField");
                 }
             }
             #endregion
@@ -108,34 +127,50 @@ namespace CodeSculptLabs.UIFramework.SampleScene
             #region Text
 
             /// <summary>
-            /// Username_Inputfield_Placeholder_Text (Text)
+            /// Button_Text (Text)
             /// </summary>
-            public static Text Username_Inputfield_Placeholder_Text
+            public static Text Button_Text
             {
                 get
                 {
                     if (_manager == null)
                     {
-                        Debug.LogError("[UI] UIManager not initialized! Cannot access Username_Inputfield_Placeholder_Text");
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Button_Text");
                         return null;
                     }
-                    return _manager.GetUIComponent<Text>("UI_Canvas/Login_Panel/Login_Panel_Username_InputField/Login_Panel_Username_Inputfield_Placeholder_Text");
+                    return _manager.GetUIComponent<Text>("UI_Canvas/Login_Panel/Submit_Button/Submit_Button_Text");
                 }
             }
 
             /// <summary>
-            /// Username_InputField_Text (Text)
+            /// Input_Field_Placeholder_Text (Text)
             /// </summary>
-            public static Text Username_InputField_Text
+            public static Text Input_Field_Placeholder_Text
             {
                 get
                 {
                     if (_manager == null)
                     {
-                        Debug.LogError("[UI] UIManager not initialized! Cannot access Username_InputField_Text");
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Input_Field_Placeholder_Text");
                         return null;
                     }
-                    return _manager.GetUIComponent<Text>("UI_Canvas/Login_Panel/Login_Panel_Username_InputField/Login_Panel_Username_InputField_Text");
+                    return _manager.GetUIComponent<Text>("UI_Canvas/Login_Panel/Login_Username_InputField/Login_Username_Input_Field_Placeholder_Text");
+                }
+            }
+
+            /// <summary>
+            /// Input_Field_Text (Text)
+            /// </summary>
+            public static Text Input_Field_Text
+            {
+                get
+                {
+                    if (_manager == null)
+                    {
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Input_Field_Text");
+                        return null;
+                    }
+                    return _manager.GetUIComponent<Text>("UI_Canvas/Login_Panel/Login_Username_InputField/Login_Username_Input_Field_Text");
                 }
             }
             #endregion
@@ -165,7 +200,7 @@ namespace CodeSculptLabs.UIFramework.SampleScene
                         Debug.LogError("[UI] UIManager not initialized! Cannot access Exit_Button");
                         return null;
                     }
-                    return _manager.GetUIComponent<Button>("UI_Canvas/Main_Menu_Panel/Main_Menu_Exit_Button");
+                    return _manager.GetUIComponent<Button>("UI_Canvas/Main_Menu_Panel/Button");
                 }
             }
 
@@ -186,6 +221,25 @@ namespace CodeSculptLabs.UIFramework.SampleScene
             }
             #endregion
 
+            #region InputField
+
+            /// <summary>
+            /// Username_InputField (InputField)
+            /// </summary>
+            public static InputField Username_InputField
+            {
+                get
+                {
+                    if (_manager == null)
+                    {
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Username_InputField");
+                        return null;
+                    }
+                    return _manager.GetUIComponent<InputField>("UI_Canvas/Main_Menu_Panel/Main_Menu_Username_InputField");
+                }
+            }
+            #endregion
+
             #region Text
 
             /// <summary>
@@ -200,7 +254,7 @@ namespace CodeSculptLabs.UIFramework.SampleScene
                         Debug.LogError("[UI] UIManager not initialized! Cannot access Exit_Button_Text");
                         return null;
                     }
-                    return _manager.GetUIComponent<Text>("UI_Canvas/Main_Menu_Panel/Main_Menu_Exit_Button/Main_Menu_Exit_Button_Text");
+                    return _manager.GetUIComponent<Text>("UI_Canvas/Main_Menu_Panel/Button/Button_Text");
                 }
             }
 
@@ -217,6 +271,38 @@ namespace CodeSculptLabs.UIFramework.SampleScene
                         return null;
                     }
                     return _manager.GetUIComponent<Text>("UI_Canvas/Main_Menu_Panel/Main_Menu_Play_Button/Main_Menu_Play_Button_Text");
+                }
+            }
+
+            /// <summary>
+            /// Username_Input_Field_Placeholder_Text (Text)
+            /// </summary>
+            public static Text Username_Input_Field_Placeholder_Text
+            {
+                get
+                {
+                    if (_manager == null)
+                    {
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Username_Input_Field_Placeholder_Text");
+                        return null;
+                    }
+                    return _manager.GetUIComponent<Text>("UI_Canvas/Main_Menu_Panel/Main_Menu_Username_InputField/Main_Menu_Username_Input_Field_Placeholder_Text");
+                }
+            }
+
+            /// <summary>
+            /// Username_Input_Field_Text (Text)
+            /// </summary>
+            public static Text Username_Input_Field_Text
+            {
+                get
+                {
+                    if (_manager == null)
+                    {
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Username_Input_Field_Text");
+                        return null;
+                    }
+                    return _manager.GetUIComponent<Text>("UI_Canvas/Main_Menu_Panel/Main_Menu_Username_InputField/Main_Menu_Username_Input_Field_Text");
                 }
             }
             #endregion
@@ -273,60 +359,6 @@ namespace CodeSculptLabs.UIFramework.SampleScene
                     return panel != null && panel.activeSelf;
                 }
             }
-
-            #region InputField
-
-            /// <summary>
-            /// Panel_Username_InputField (InputField)
-            /// </summary>
-            public static InputField Panel_Username_InputField
-            {
-                get
-                {
-                    if (_manager == null)
-                    {
-                        Debug.LogError("[UI] UIManager not initialized! Cannot access Panel_Username_InputField");
-                        return null;
-                    }
-                    return _manager.GetUIComponent<InputField>("UI_Canvas/Main_Menu_Panel/Main_Menu_Panel_Username_InputField");
-                }
-            }
-            #endregion
-
-            #region Text
-
-            /// <summary>
-            /// Panel_Username_Inputfield_Placeholder_Text (Text)
-            /// </summary>
-            public static Text Panel_Username_Inputfield_Placeholder_Text
-            {
-                get
-                {
-                    if (_manager == null)
-                    {
-                        Debug.LogError("[UI] UIManager not initialized! Cannot access Panel_Username_Inputfield_Placeholder_Text");
-                        return null;
-                    }
-                    return _manager.GetUIComponent<Text>("UI_Canvas/Main_Menu_Panel/Main_Menu_Panel_Username_InputField/Main_Menu_Panel_Username_Inputfield_Placeholder_Text");
-                }
-            }
-
-            /// <summary>
-            /// Panel_Username_InputField_Text (Text)
-            /// </summary>
-            public static Text Panel_Username_InputField_Text
-            {
-                get
-                {
-                    if (_manager == null)
-                    {
-                        Debug.LogError("[UI] UIManager not initialized! Cannot access Panel_Username_InputField_Text");
-                        return null;
-                    }
-                    return _manager.GetUIComponent<Text>("UI_Canvas/Main_Menu_Panel/Main_Menu_Panel_Username_InputField/Main_Menu_Panel_Username_InputField_Text");
-                }
-            }
-            #endregion
         }
 
         #endregion
@@ -381,21 +413,40 @@ namespace CodeSculptLabs.UIFramework.SampleScene
                 }
             }
 
-            #region InputField
+            #region Button
 
             /// <summary>
-            /// Username_InputField (InputField)
+            /// Button (Button)
             /// </summary>
-            public static InputField Username_InputField
+            public static Button Button
             {
                 get
                 {
                     if (_manager == null)
                     {
-                        Debug.LogError("[UI] UIManager not initialized! Cannot access Username_InputField");
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Button");
                         return null;
                     }
-                    return _manager.GetUIComponent<InputField>("UI_Canvas/Profile_Panel/Profile_Panel_Username_InputField");
+                    return _manager.GetUIComponent<Button>("UI_Canvas/Profile_Panel/Submit_Button");
+                }
+            }
+            #endregion
+
+            #region InputField
+
+            /// <summary>
+            /// InputField (InputField)
+            /// </summary>
+            public static InputField InputField
+            {
+                get
+                {
+                    if (_manager == null)
+                    {
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access InputField");
+                        return null;
+                    }
+                    return _manager.GetUIComponent<InputField>("UI_Canvas/Profile_Panel/Profile_Username_InputField");
                 }
             }
             #endregion
@@ -403,34 +454,50 @@ namespace CodeSculptLabs.UIFramework.SampleScene
             #region Text
 
             /// <summary>
-            /// Username_Inputfield_Placeholder_Text (Text)
+            /// Button_Text (Text)
             /// </summary>
-            public static Text Username_Inputfield_Placeholder_Text
+            public static Text Button_Text
             {
                 get
                 {
                     if (_manager == null)
                     {
-                        Debug.LogError("[UI] UIManager not initialized! Cannot access Username_Inputfield_Placeholder_Text");
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Button_Text");
                         return null;
                     }
-                    return _manager.GetUIComponent<Text>("UI_Canvas/Profile_Panel/Profile_Panel_Username_InputField/Profile_Panel_Username_Inputfield_Placeholder_Text");
+                    return _manager.GetUIComponent<Text>("UI_Canvas/Profile_Panel/Submit_Button/Submit_Button_Text");
                 }
             }
 
             /// <summary>
-            /// Username_InputField_Text (Text)
+            /// Input_Field_Placeholder_Text (Text)
             /// </summary>
-            public static Text Username_InputField_Text
+            public static Text Input_Field_Placeholder_Text
             {
                 get
                 {
                     if (_manager == null)
                     {
-                        Debug.LogError("[UI] UIManager not initialized! Cannot access Username_InputField_Text");
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Input_Field_Placeholder_Text");
                         return null;
                     }
-                    return _manager.GetUIComponent<Text>("UI_Canvas/Profile_Panel/Profile_Panel_Username_InputField/Profile_Panel_Username_InputField_Text");
+                    return _manager.GetUIComponent<Text>("UI_Canvas/Profile_Panel/Profile_Username_InputField/Profile_Username_Input_Field_Placeholder_Text");
+                }
+            }
+
+            /// <summary>
+            /// Input_Field_Text (Text)
+            /// </summary>
+            public static Text Input_Field_Text
+            {
+                get
+                {
+                    if (_manager == null)
+                    {
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Input_Field_Text");
+                        return null;
+                    }
+                    return _manager.GetUIComponent<Text>("UI_Canvas/Profile_Panel/Profile_Username_InputField/Profile_Username_Input_Field_Text");
                 }
             }
             #endregion
@@ -488,21 +555,40 @@ namespace CodeSculptLabs.UIFramework.SampleScene
                 }
             }
 
-            #region InputField
+            #region Button
 
             /// <summary>
-            /// Username_InputField (InputField)
+            /// Button (Button)
             /// </summary>
-            public static InputField Username_InputField
+            public static Button Button
             {
                 get
                 {
                     if (_manager == null)
                     {
-                        Debug.LogError("[UI] UIManager not initialized! Cannot access Username_InputField");
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Button");
                         return null;
                     }
-                    return _manager.GetUIComponent<InputField>("UI_Canvas/SignUp_Panel/SignUp_Panel_Username_InputField");
+                    return _manager.GetUIComponent<Button>("UI_Canvas/SignUp_Panel/Submit_Button");
+                }
+            }
+            #endregion
+
+            #region InputField
+
+            /// <summary>
+            /// InputField (InputField)
+            /// </summary>
+            public static InputField InputField
+            {
+                get
+                {
+                    if (_manager == null)
+                    {
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access InputField");
+                        return null;
+                    }
+                    return _manager.GetUIComponent<InputField>("UI_Canvas/SignUp_Panel/SignUp_Username_InputField");
                 }
             }
             #endregion
@@ -510,34 +596,99 @@ namespace CodeSculptLabs.UIFramework.SampleScene
             #region Text
 
             /// <summary>
-            /// Username_Inputfield_Placeholder_Text (Text)
+            /// Button_Text (Text)
             /// </summary>
-            public static Text Username_Inputfield_Placeholder_Text
+            public static Text Button_Text
             {
                 get
                 {
                     if (_manager == null)
                     {
-                        Debug.LogError("[UI] UIManager not initialized! Cannot access Username_Inputfield_Placeholder_Text");
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Button_Text");
                         return null;
                     }
-                    return _manager.GetUIComponent<Text>("UI_Canvas/SignUp_Panel/SignUp_Panel_Username_InputField/SignUp_Panel_Username_Inputfield_Placeholder_Text");
+                    return _manager.GetUIComponent<Text>("UI_Canvas/SignUp_Panel/Submit_Button/Submit_Button_Text");
                 }
             }
 
             /// <summary>
-            /// Username_InputField_Text (Text)
+            /// Input_Field_Placeholder_Text (Text)
             /// </summary>
-            public static Text Username_InputField_Text
+            public static Text Input_Field_Placeholder_Text
             {
                 get
                 {
                     if (_manager == null)
                     {
-                        Debug.LogError("[UI] UIManager not initialized! Cannot access Username_InputField_Text");
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Input_Field_Placeholder_Text");
                         return null;
                     }
-                    return _manager.GetUIComponent<Text>("UI_Canvas/SignUp_Panel/SignUp_Panel_Username_InputField/SignUp_Panel_Username_InputField_Text");
+                    return _manager.GetUIComponent<Text>("UI_Canvas/SignUp_Panel/SignUp_Username_InputField/SignUp_Username_Input_Field_Placeholder_Text");
+                }
+            }
+
+            /// <summary>
+            /// Input_Field_Text (Text)
+            /// </summary>
+            public static Text Input_Field_Text
+            {
+                get
+                {
+                    if (_manager == null)
+                    {
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Input_Field_Text");
+                        return null;
+                    }
+                    return _manager.GetUIComponent<Text>("UI_Canvas/SignUp_Panel/SignUp_Username_InputField/SignUp_Username_Input_Field_Text");
+                }
+            }
+            #endregion
+        }
+
+        #endregion
+
+        #region Submit
+
+        /// <summary>
+        /// Submit panel and its UI elements.
+        /// </summary>
+        public static class Submit
+        {
+
+            #region Button
+
+            /// <summary>
+            /// Submit_Button (Button)
+            /// </summary>
+            public static Button Submit_Button
+            {
+                get
+                {
+                    if (_manager == null)
+                    {
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Submit_Button");
+                        return null;
+                    }
+                    return _manager.GetUIComponent<Button>("UI_Canvas/Main_Menu_Panel/Submit_Button");
+                }
+            }
+            #endregion
+
+            #region Text
+
+            /// <summary>
+            /// Text (Text)
+            /// </summary>
+            public static Text Text
+            {
+                get
+                {
+                    if (_manager == null)
+                    {
+                        Debug.LogError("[UI] UIManager not initialized! Cannot access Text");
+                        return null;
+                    }
+                    return _manager.GetUIComponent<Text>("UI_Canvas/Main_Menu_Panel/Submit_Button/Submit_Button_Text");
                 }
             }
             #endregion

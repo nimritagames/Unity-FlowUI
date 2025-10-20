@@ -1,0 +1,29 @@
+{
+  "name": "com.nimrita.flowui",
+  "version": "1.0.0",
+  "displayName": "Flow UI System",
+  "description": "A comprehensive fluent UI builder system for Unity with centralized management, editor integration, and powerful animation capabilities. Build complex UI hierarchies with an intuitive fluent interface pattern.",
+  "unity": "2022.3",
+  "keywords": [
+    "ui",
+    "ugui",
+    "builder",
+    "fluent",
+    "interface",
+    "uimanager",
+    "editor",
+    "animation"
+  ],
+  "author": {
+    "name": "Nimrita Games",
+    "url": "https://github.com/nimritagames"
+  },
+  "dependencies": {
+    "com.unity.ugui": "1.0.0",
+    "com.unity.textmeshpro": "3.0.7"
+  },
+  "license": "MIT",
+  "documentationUrl": "https://github.com/nimritagames/Unity-FlowUI#readme",
+  "changelogUrl": "https://github.com/nimritagames/Unity-FlowUI/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/nimritagames/Unity-FlowUI/blob/main/LICENSE.md"
+}

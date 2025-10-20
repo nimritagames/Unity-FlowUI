@@ -1,5 +1,14 @@
 {
   "dependencies": {
+    "com.nimrita.flowui": {
+      "version": "file:com.nimrita.flowui",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0",
+        "com.unity.textmeshpro": "3.0.7"
+      }
+    },
     "com.unity.collab-proxy": {
       "version": "2.9.3",
       "depth": 0,

@@ -1,0 +1,90 @@
+# Unity .gitattributes
+# Ensures proper line ending handling across different operating systems
+
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Unity YAML files should always use LF
+*.meta text eol=lf
+*.prefab text eol=lf
+*.unity text eol=lf
+*.asset text eol=lf
+*.mat text eol=lf
+*.controller text eol=lf
+*.anim text eol=lf
+
+# Unity scene files
+*.scene text eol=lf
+
+# C# files
+*.cs text eol=lf diff=csharp
+*.csx text eol=lf
+*.asmdef text eol=lf
+
+# Shader files
+*.shader text eol=lf
+*.cginc text eol=lf
+*.hlsl text eol=lf
+*.glsl text eol=lf
+*.compute text eol=lf
+
+# Documentation
+*.md text eol=lf
+*.txt text eol=lf
+
+# JSON files
+*.json text eol=lf
+
+# XML files
+*.xml text eol=lf
+
+# Image formats (binary)
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.psd binary
+*.ai binary
+*.tga binary
+*.tif binary
+*.tiff binary
+*.exr binary
+*.hdr binary
+
+# Audio formats (binary)
+*.mp3 binary
+*.ogg binary
+*.wav binary
+
+# Video formats (binary)
+*.mp4 binary
+*.mov binary
+*.avi binary
+
+# 3D model formats (binary)
+*.fbx binary
+*.obj binary
+*.max binary
+*.blend binary
+*.dae binary
+*.mb binary
+*.ma binary
+
+# Font files (binary)
+*.ttf binary
+*.otf binary
+
+# Unity specific binary files
+*.cubemap binary
+*.unitypackage binary
+
+# Compressed files (binary)
+*.zip binary
+*.7z binary
+*.gz binary
+*.rar binary
+
+# Unity Large File Storage (LFS) - uncomment if using Git LFS
+# *.psd filter=lfs diff=lfs merge=lfs -text
+# *.fbx filter=lfs diff=lfs merge=lfs -text
+# *.unitypackage filter=lfs diff=lfs merge=lfs -text
