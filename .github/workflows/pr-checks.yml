@@ -45,6 +45,13 @@ concurrency:
   group: pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+# 📚 LEARNING: Permissions needed for workflow actions
+# These control what the workflow can do with GitHub resources
+permissions:
+  contents: read         # Read repository code
+  pull-requests: write   # Comment on PRs and update status
+  issues: write          # Post comments (PRs are issues internally)
+
 env:
   UNITY_VERSION: 2022.3.62f2
   PACKAGE_PATH: Packages/com.nimrita.flowui
