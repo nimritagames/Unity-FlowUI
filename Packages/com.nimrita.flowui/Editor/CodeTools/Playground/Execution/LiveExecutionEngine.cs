@@ -22,6 +22,7 @@ namespace Nimrita.FlowUI.Editor.Playground
         private readonly IPlaygroundCompiler compiler;
         private readonly ContainerTracker containerTracker;
         private readonly SmartDebouncer debouncer;
+        private readonly PlaygroundStateManager stateManager;
         private readonly Action<ExecutionStatus> onStatusChanged;
 
         // State
@@ -42,6 +43,8 @@ namespace Nimrita.FlowUI.Editor.Playground
             this.compiler = compiler ?? throw new ArgumentNullException(nameof(compiler));
             this.containerTracker = containerTracker ?? throw new ArgumentNullException(nameof(containerTracker));
             this.debouncer = new SmartDebouncer();
+            this.stateManager = new PlaygroundStateManager();
+            this.stateManager.LogTransitions = true; // Enable transition logging
             this.onStatusChanged = onStatusChanged;
         }
 
@@ -128,6 +131,7 @@ namespace Nimrita.FlowUI.Editor.Playground
             {
                 Debug.LogError("[LiveEngine] No UIManager!");
                 var error = ExecutionResult.CreateError("No UIManager assigned!");
+                stateManager.TransitionTo(PlaygroundState.Error, error.ErrorMessage);
                 NotifyStatus(ExecutionStatus.CreateError(error.ErrorMessage));
                 failedExecutions++;
                 return error;
@@ -136,15 +140,18 @@ namespace Nimrita.FlowUI.Editor.Playground
             if (string.IsNullOrWhiteSpace(code))
             {
                 // Empty code - just cleanup
+                stateManager.TransitionTo(PlaygroundState.Compiling);
                 NotifyStatus(ExecutionStatus.CreateCompiling());
                 containerTracker.CleanupPrevious();
                 debouncer.MarkExecuted(code);
+                stateManager.TransitionTo(PlaygroundState.Success);
                 NotifyStatus(ExecutionStatus.CreateSuccess(0, 0));
                 successfulExecutions++;
                 return ExecutionResult.CreateSuccess(0);
             }
 
             // Compile
+            stateManager.TransitionTo(PlaygroundState.Compiling);
             NotifyStatus(ExecutionStatus.CreateCompiling());
 
             if (!compiler.TryCompile(code, out CompilationResult compilationResult))
@@ -152,6 +159,7 @@ namespace Nimrita.FlowUI.Editor.Playground
                 // Compilation failed
                 string errorMsg = string.Join("\n", compilationResult.Errors);
                 failedExecutions++;
+                stateManager.TransitionTo(PlaygroundState.Error, errorMsg);
                 NotifyStatus(ExecutionStatus.CreateError(errorMsg));
                 return ExecutionResult.CreateError(errorMsg);
             }
@@ -162,6 +170,7 @@ namespace Nimrita.FlowUI.Editor.Playground
             // Execute
             try
             {
+                stateManager.TransitionTo(PlaygroundState.Executing);
                 NotifyStatus(ExecutionStatus.CreateExecuting());
 
                 // Mark for undo
@@ -193,6 +202,7 @@ namespace Nimrita.FlowUI.Editor.Playground
                 float totalTime = compilationResult.CompilationTimeMs;
                 int objectCount = containerTracker.TrackedObjectCount;
 
+                stateManager.TransitionTo(PlaygroundState.Success);
                 NotifyStatus(ExecutionStatus.CreateSuccess(totalTime, objectCount, compilationResult.WasCached));
 
                 return ExecutionResult.CreateSuccess(totalTime, objectCount);
@@ -206,18 +216,20 @@ namespace Nimrita.FlowUI.Editor.Playground
                 }
                 failedExecutions++;
                 string errorMsg = $"Execution failed: {ex.InnerException?.Message ?? ex.Message}";
+                stateManager.TransitionTo(PlaygroundState.Error, errorMsg);
                 NotifyStatus(ExecutionStatus.CreateError(errorMsg));
                 return ExecutionResult.CreateError(errorMsg);
             }
         }
 
         /// <summary>
-        /// Clears compilation cache and debouncer state.
+        /// Clears compilation cache, debouncer state, and resets FSM.
         /// </summary>
         public void ClearCache()
         {
             compiler.ClearCache();
             debouncer.Reset();
+            stateManager.Reset();
         }
 
         /// <summary>
