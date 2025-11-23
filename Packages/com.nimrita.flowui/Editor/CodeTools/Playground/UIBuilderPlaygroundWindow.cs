@@ -67,8 +67,11 @@ namespace Nimrita.FlowUI.Editor.Playground
             }
             else
             {
+                string reason = (testResult != null && testResult.Errors != null && testResult.Errors.Length > 0)
+                    ? string.Join(" | ", testResult.Errors)
+                    : "Roslyn self-test failed (no error details)";
                 compiler = new FastPlaygroundCompiler();
-                Debug.Log("[Playground] ✅ Using FastPlaygroundCompiler (Roslyn unavailable in this Unity version)");
+                Debug.Log($"[Playground] ✅ Using FastPlaygroundCompiler (Roslyn unavailable). Reason: {reason}");
             }
 
             containerTracker = new ContainerTracker();

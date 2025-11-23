@@ -118,7 +118,8 @@ namespace Nimrita.FlowUI.Editor.Playground
                 { PlaygroundState.Idle, new[] { PlaygroundState.Editing } },
                 { PlaygroundState.Editing, new[] { PlaygroundState.WaitingCompile, PlaygroundState.Idle } },
                 { PlaygroundState.WaitingCompile, new[] { PlaygroundState.Compiling, PlaygroundState.Editing, PlaygroundState.Idle } },
-                { PlaygroundState.Compiling, new[] { PlaygroundState.Executing, PlaygroundState.Error } },
+                // Allow Compiling → Success for no-op/cleanup runs that skip execution
+                { PlaygroundState.Compiling, new[] { PlaygroundState.Executing, PlaygroundState.Error, PlaygroundState.Success } },
                 { PlaygroundState.Executing, new[] { PlaygroundState.Success, PlaygroundState.Error } },
                 { PlaygroundState.Success, new[] { PlaygroundState.Editing, PlaygroundState.Idle } },
                 { PlaygroundState.Error, new[] { PlaygroundState.Editing, PlaygroundState.Idle } }
