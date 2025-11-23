@@ -21,15 +21,12 @@ namespace Nimrita.FlowUI.Editor.Playground
         // Dependencies
         private readonly IPlaygroundCompiler compiler;
         private readonly ContainerTracker containerTracker;
+        private readonly SmartDebouncer debouncer;
         private readonly Action<ExecutionStatus> onStatusChanged;
 
         // State
-        private string lastExecutedCode = "";
-        private string lastSeenCode = ""; // Track what we saw last frame
-        private double lastChangeTime = 0;
         private double lastExecutionTime = 0;
         private bool liveModeEnabled = false;
-        private float debounceDelay = DEFAULT_DEBOUNCE_DELAY;
         private UIManager targetUIManager;
 
         // Stats
@@ -44,6 +41,7 @@ namespace Nimrita.FlowUI.Editor.Playground
         {
             this.compiler = compiler ?? throw new ArgumentNullException(nameof(compiler));
             this.containerTracker = containerTracker ?? throw new ArgumentNullException(nameof(containerTracker));
+            this.debouncer = new SmartDebouncer();
             this.onStatusChanged = onStatusChanged;
         }
 
@@ -75,8 +73,8 @@ namespace Nimrita.FlowUI.Editor.Playground
         /// </summary>
         public float DebounceDelay
         {
-            get => debounceDelay;
-            set => debounceDelay = Mathf.Clamp(value, 0.1f, 2f);
+            get => debouncer.DebounceDelay;
+            set => debouncer.DebounceDelay = value;
         }
 
         /// <summary>
@@ -95,26 +93,10 @@ namespace Nimrita.FlowUI.Editor.Playground
             if (!liveModeEnabled) return;
             if (targetUIManager == null) return;
 
-            // Detect ACTUAL code change (compared to last frame, not last execution)
-            if (currentCode != lastSeenCode)
+            // Check if smart debouncer says we should execute
+            if (debouncer.ShouldExecute(currentCode, out string reason))
             {
-                lastChangeTime = EditorApplication.timeSinceStartup;
-                lastSeenCode = currentCode;
-                // Only log significant changes (not every frame)
-            }
-
-            // Check if we should execute (user stopped typing AND code is different from last execution)
-            double timeSinceChange = EditorApplication.timeSinceStartup - lastChangeTime;
-
-            // Execute ONLY if:
-            // 1. Enough time passed (debounce)
-            // 2. Code is different from last execution
-            // 3. Code is not empty
-            if (timeSinceChange >= debounceDelay &&
-                currentCode != lastExecutedCode &&
-                !string.IsNullOrWhiteSpace(currentCode))
-            {
-                Debug.Log($"[LiveEngine] ⚡ Auto-executing after {timeSinceChange:F2}s typing pause");
+                Debug.Log($"[LiveEngine] ⚡ Auto-executing: {reason}");
                 ExecuteLive(currentCode);
             }
         }
@@ -156,7 +138,7 @@ namespace Nimrita.FlowUI.Editor.Playground
                 // Empty code - just cleanup
                 NotifyStatus(ExecutionStatus.CreateCompiling());
                 containerTracker.CleanupPrevious();
-                lastExecutedCode = code;
+                debouncer.MarkExecuted(code);
                 NotifyStatus(ExecutionStatus.CreateSuccess(0, 0));
                 successfulExecutions++;
                 return ExecutionResult.CreateSuccess(0);
@@ -205,7 +187,7 @@ namespace Nimrita.FlowUI.Editor.Playground
                 );
 
                 // Success!
-                lastExecutedCode = code;
+                debouncer.MarkExecuted(code);
                 successfulExecutions++;
 
                 float totalTime = compilationResult.CompilationTimeMs;
@@ -230,12 +212,12 @@ namespace Nimrita.FlowUI.Editor.Playground
         }
 
         /// <summary>
-        /// Clears compilation cache.
+        /// Clears compilation cache and debouncer state.
         /// </summary>
         public void ClearCache()
         {
             compiler.ClearCache();
-            lastExecutedCode = "";
+            debouncer.Reset();
         }
 
         /// <summary>
