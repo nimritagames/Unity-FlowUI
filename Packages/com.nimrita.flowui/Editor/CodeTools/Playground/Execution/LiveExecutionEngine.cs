@@ -126,12 +126,21 @@ namespace Nimrita.FlowUI.Editor.Playground
             totalExecutions++;
             lastExecutionTime = EditorApplication.timeSinceStartup;
 
+            // Transition through FSM states properly
+            // Idle → Editing (when we start executing)
+            if (stateManager.CurrentState == PlaygroundState.Idle)
+            {
+                stateManager.TransitionTo(PlaygroundState.Editing);
+            }
+
             // Validate
             if (targetUIManager == null)
             {
                 Debug.LogError("[LiveEngine] No UIManager!");
                 var error = ExecutionResult.CreateError("No UIManager assigned!");
-                stateManager.TransitionTo(PlaygroundState.Error, error.ErrorMessage);
+                // From Editing, we can only go to Idle or WaitingCompile, not Error
+                // So go to Idle first
+                stateManager.TransitionTo(PlaygroundState.Idle);
                 NotifyStatus(ExecutionStatus.CreateError(error.ErrorMessage));
                 failedExecutions++;
                 return error;
@@ -140,6 +149,8 @@ namespace Nimrita.FlowUI.Editor.Playground
             if (string.IsNullOrWhiteSpace(code))
             {
                 // Empty code - just cleanup
+                // Editing → WaitingCompile → Compiling
+                stateManager.TransitionTo(PlaygroundState.WaitingCompile);
                 stateManager.TransitionTo(PlaygroundState.Compiling);
                 NotifyStatus(ExecutionStatus.CreateCompiling());
                 containerTracker.CleanupPrevious();
@@ -151,6 +162,8 @@ namespace Nimrita.FlowUI.Editor.Playground
             }
 
             // Compile
+            // Editing → WaitingCompile → Compiling
+            stateManager.TransitionTo(PlaygroundState.WaitingCompile);
             stateManager.TransitionTo(PlaygroundState.Compiling);
             NotifyStatus(ExecutionStatus.CreateCompiling());
 
@@ -205,6 +218,9 @@ namespace Nimrita.FlowUI.Editor.Playground
                 stateManager.TransitionTo(PlaygroundState.Success);
                 NotifyStatus(ExecutionStatus.CreateSuccess(totalTime, objectCount, compilationResult.WasCached));
 
+                // Return to Idle state, ready for next execution
+                stateManager.TransitionTo(PlaygroundState.Idle);
+
                 return ExecutionResult.CreateSuccess(totalTime, objectCount);
             }
             catch (Exception ex)
@@ -218,6 +234,10 @@ namespace Nimrita.FlowUI.Editor.Playground
                 string errorMsg = $"Execution failed: {ex.InnerException?.Message ?? ex.Message}";
                 stateManager.TransitionTo(PlaygroundState.Error, errorMsg);
                 NotifyStatus(ExecutionStatus.CreateError(errorMsg));
+
+                // Return to Idle state, ready for next execution
+                stateManager.TransitionTo(PlaygroundState.Idle);
+
                 return ExecutionResult.CreateError(errorMsg);
             }
         }

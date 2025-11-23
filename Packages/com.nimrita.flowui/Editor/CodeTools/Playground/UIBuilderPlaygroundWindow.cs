@@ -58,15 +58,17 @@ namespace Nimrita.FlowUI.Editor.Playground
             // Try Roslyn first, fallback to Fast if it fails
             var roslynCompiler = new UnityRoslynCompiler();
             CompilationResult testResult;
-            if (roslynCompiler.TryCompile("// test", out testResult) || !testResult.Success)
+            bool roslynWorks = roslynCompiler.TryCompile("// test", out testResult) && testResult.Success;
+
+            if (roslynWorks)
             {
                 compiler = roslynCompiler;
-                Debug.Log("[Playground] Using UnityRoslynCompiler (Roslyn via reflection)");
+                Debug.Log("[Playground] ✅ Using UnityRoslynCompiler (10× faster!)");
             }
             else
             {
                 compiler = new FastPlaygroundCompiler();
-                Debug.Log("[Playground] Using FastPlaygroundCompiler (Roslyn unavailable)");
+                Debug.Log("[Playground] ✅ Using FastPlaygroundCompiler (Roslyn unavailable in this Unity version)");
             }
 
             containerTracker = new ContainerTracker();

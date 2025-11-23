@@ -122,7 +122,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &496743893
+--- !u!1 &615398288
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -130,8 +130,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 496743894}
-  - component: {fileID: 496743895}
+  - component: {fileID: 615398289}
+  - component: {fileID: 615398290}
   m_Layer: 0
   m_Name: UIManager
   m_TagString: Untagged
@@ -139,13 +139,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &496743894
+--- !u!4 &615398289
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 496743893}
+  m_GameObject: {fileID: 615398288}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -154,13 +154,13 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &496743895
+--- !u!114 &615398290
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 496743893}
+  m_GameObject: {fileID: 615398288}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3431ee136e2b8454e81ec527be23c777, type: 3}
@@ -171,12 +171,7 @@ MonoBehaviour:
     references:
     - name: TestButton
       fullPath: Canvas/TestButton
-      instanceID: -19750
-      uiElement: {fileID: 0}
-      elementType: 1
-    - name: TestButton
-      fullPath: Canvas/TestButton
-      instanceID: -24066
+      instanceID: -8018
       uiElement: {fileID: 0}
       elementType: 1
 --- !u!1 &705507993
@@ -439,5 +434,5 @@ SceneRoots:
   m_Roots:
   - {fileID: 963194228}
   - {fileID: 705507995}
+  - {fileID: 615398289}
   - {fileID: 1917843230}
-  - {fileID: 496743894}
