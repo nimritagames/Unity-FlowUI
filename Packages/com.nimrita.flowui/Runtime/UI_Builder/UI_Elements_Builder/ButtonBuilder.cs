@@ -63,7 +63,7 @@ public class ButtonBuilder : UIElementBuilder<Button, ButtonBuilder>
                 }
 
                 tmpTextComponent.text = text;
-                tmpTextComponent.color = Color.white;
+                tmpTextComponent.color = Color.black; // Changed from white for better visibility
                 tmpTextComponent.alignment = TextAlignmentOptions.Center;
                 tmpTextComponent.fontSize = 14;
 
@@ -89,7 +89,7 @@ public class ButtonBuilder : UIElementBuilder<Button, ButtonBuilder>
                 }
 
                 textComponent.text = text;
-                textComponent.color = Color.white;
+                textComponent.color = Color.black; // Changed from white for better visibility
                 textComponent.alignment = TextAnchor.MiddleCenter;
                 textComponent.fontSize = 14;
                 textComponent.font = GetDefaultFont();
