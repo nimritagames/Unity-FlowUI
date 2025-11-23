@@ -15,7 +15,7 @@ namespace Nimrita.FlowUI.Editor.Playground
 
         // Core components
         private LiveExecutionEngine liveEngine;
-        private FastPlaygroundCompiler compiler;
+        private IPlaygroundCompiler compiler;
         private ContainerTracker containerTracker;
 
         // UI State
@@ -55,7 +55,20 @@ namespace Nimrita.FlowUI.Editor.Playground
         private void OnEnable()
         {
             // Initialize core components
-            compiler = new FastPlaygroundCompiler();
+            // Try Roslyn first, fallback to Fast if it fails
+            var roslynCompiler = new UnityRoslynCompiler();
+            CompilationResult testResult;
+            if (roslynCompiler.TryCompile("// test", out testResult) || !testResult.Success)
+            {
+                compiler = roslynCompiler;
+                Debug.Log("[Playground] Using UnityRoslynCompiler (Roslyn via reflection)");
+            }
+            else
+            {
+                compiler = new FastPlaygroundCompiler();
+                Debug.Log("[Playground] Using FastPlaygroundCompiler (Roslyn unavailable)");
+            }
+
             containerTracker = new ContainerTracker();
             liveEngine = new LiveExecutionEngine(compiler, containerTracker, OnStatusChanged);
 
