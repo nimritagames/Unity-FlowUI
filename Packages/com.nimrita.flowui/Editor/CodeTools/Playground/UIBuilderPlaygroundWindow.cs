@@ -15,7 +15,7 @@ namespace Nimrita.FlowUI.Editor.Playground
 
         // Core components
         private LiveExecutionEngine liveEngine;
-        private RoslynCompiler compiler;
+        private FastPlaygroundCompiler compiler;
         private ContainerTracker containerTracker;
 
         // UI State
@@ -55,7 +55,7 @@ namespace Nimrita.FlowUI.Editor.Playground
         private void OnEnable()
         {
             // Initialize core components
-            compiler = new RoslynCompiler();
+            compiler = new FastPlaygroundCompiler();
             containerTracker = new ContainerTracker();
             liveEngine = new LiveExecutionEngine(compiler, containerTracker, OnStatusChanged);
 
