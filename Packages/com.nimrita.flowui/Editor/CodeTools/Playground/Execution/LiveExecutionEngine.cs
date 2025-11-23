@@ -20,7 +20,7 @@ namespace Nimrita.FlowUI.Editor.Playground
 
         // Dependencies
         private readonly IPlaygroundCompiler compiler;
-        private readonly UIStateTracker stateTracker;
+        private readonly ContainerTracker containerTracker;
         private readonly Action<ExecutionStatus> onStatusChanged;
 
         // State
@@ -39,11 +39,11 @@ namespace Nimrita.FlowUI.Editor.Playground
 
         public LiveExecutionEngine(
             IPlaygroundCompiler compiler,
-            UIStateTracker stateTracker,
+            ContainerTracker containerTracker,
             Action<ExecutionStatus> onStatusChanged = null)
         {
             this.compiler = compiler ?? throw new ArgumentNullException(nameof(compiler));
-            this.stateTracker = stateTracker ?? throw new ArgumentNullException(nameof(stateTracker));
+            this.containerTracker = containerTracker ?? throw new ArgumentNullException(nameof(containerTracker));
             this.onStatusChanged = onStatusChanged;
         }
 
@@ -155,7 +155,7 @@ namespace Nimrita.FlowUI.Editor.Playground
             {
                 // Empty code - just cleanup
                 NotifyStatus(ExecutionStatus.CreateCompiling());
-                stateTracker.CleanupPreviousExecution();
+                containerTracker.CleanupPrevious();
                 lastExecutedCode = code;
                 NotifyStatus(ExecutionStatus.CreateSuccess(0, 0));
                 successfulExecutions++;
@@ -175,7 +175,7 @@ namespace Nimrita.FlowUI.Editor.Playground
             }
 
             // Cleanup previous UI
-            stateTracker.CleanupPreviousExecution();
+            containerTracker.CleanupPrevious();
 
             // Execute
             try
@@ -189,14 +189,14 @@ namespace Nimrita.FlowUI.Editor.Playground
                 Type generatedType = compilationResult.CompiledAssembly.GetType($"{GENERATED_NAMESPACE}.{GENERATED_CLASS}");
                 MethodInfo executeMethod = generatedType.GetMethod(EXECUTE_METHOD);
 
-                // Begin tracking (take scene snapshot BEFORE execution)
-                stateTracker.BeginExecution();
+                // Begin tracking (create container root)
+                containerTracker.BeginExecution();
 
-                // Execute!
-                executeMethod.Invoke(null, new object[] { targetUIManager });
+                // Execute! Pass UIManager AND root container transform
+                executeMethod.Invoke(null, new object[] { targetUIManager, containerTracker.RootTransform });
 
-                // End tracking (detect what was created by diffing scene)
-                stateTracker.EndExecution();
+                // End tracking (collect created objects from container)
+                containerTracker.EndExecution();
 
                 // Mark scene dirty
                 EditorUtility.SetDirty(targetUIManager);
@@ -209,7 +209,7 @@ namespace Nimrita.FlowUI.Editor.Playground
                 successfulExecutions++;
 
                 float totalTime = compilationResult.CompilationTimeMs;
-                int objectCount = stateTracker.GetTrackedObjectCount();
+                int objectCount = containerTracker.TrackedObjectCount;
 
                 NotifyStatus(ExecutionStatus.CreateSuccess(totalTime, objectCount, compilationResult.WasCached));
 

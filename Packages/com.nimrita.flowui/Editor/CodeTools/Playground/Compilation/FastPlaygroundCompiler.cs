@@ -97,7 +97,7 @@ namespace Nimrita.FlowUI.Editor.Playground
             sb.AppendLine("{");
             sb.AppendLine($"    public static class {CLASS_NAME}");
             sb.AppendLine("    {");
-            sb.AppendLine($"        public static void {METHOD_NAME}(UIManager uiManager)");
+            sb.AppendLine($"        public static void {METHOD_NAME}(UIManager uiManager, Transform playgroundRoot)");
             sb.AppendLine("        {");
 
             // User code (indented)

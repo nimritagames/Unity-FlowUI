@@ -15,8 +15,8 @@ namespace Nimrita.FlowUI.Editor.Playground
 
         // Core components
         private LiveExecutionEngine liveEngine;
-        private FastPlaygroundCompiler compiler;
-        private UIStateTracker stateTracker;
+        private RoslynCompiler compiler;
+        private ContainerTracker containerTracker;
 
         // UI State
         private string builderCode = "";
@@ -55,9 +55,9 @@ namespace Nimrita.FlowUI.Editor.Playground
         private void OnEnable()
         {
             // Initialize core components
-            compiler = new FastPlaygroundCompiler();
-            stateTracker = new UIStateTracker();
-            liveEngine = new LiveExecutionEngine(compiler, stateTracker, OnStatusChanged);
+            compiler = new RoslynCompiler();
+            containerTracker = new ContainerTracker();
+            liveEngine = new LiveExecutionEngine(compiler, containerTracker, OnStatusChanged);
 
             // Load saved code
             builderCode = EditorPrefs.GetString("UIBuilderPlayground_Code", GetDefaultTemplate());
@@ -436,6 +436,7 @@ namespace Nimrita.FlowUI.Editor.Playground
 
 // Get or create canvas
 var canvas = UIBuilderHelpers.EnsureCanvas();
+canvas.transform.SetParent(playgroundRoot); // Auto-tracked for cleanup!
 
 // Example: Create a button
 uiManager.CreateButton(""LiveButton"")
@@ -454,6 +455,7 @@ uiManager.CreateButton(""LiveButton"")
         {
             return @"// Simple Button Example
 var canvas = UIBuilderHelpers.EnsureCanvas();
+canvas.transform.SetParent(playgroundRoot);
 
 uiManager.CreateButton(""MyButton"")
     .WithText(""Click Me!"")
@@ -467,6 +469,7 @@ uiManager.CreateButton(""MyButton"")
         {
             return @"// Panel with Multiple Buttons
 var canvas = UIBuilderHelpers.EnsureCanvas();
+canvas.transform.SetParent(playgroundRoot);
 
 var panel = uiManager.CreatePanel(""MainPanel"")
     .WithSize(400, 300)
@@ -493,6 +496,7 @@ uiManager.CreateButton(""Button2"")
         {
             return @"// Input Form Example
 var canvas = UIBuilderHelpers.EnsureCanvas();
+canvas.transform.SetParent(playgroundRoot);
 
 var panel = uiManager.CreatePanel(""FormPanel"")
     .WithSize(400, 250)
