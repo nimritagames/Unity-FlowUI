@@ -127,10 +127,21 @@ namespace Nimrita.FlowUI.Editor.Playground
             lastExecutionTime = EditorApplication.timeSinceStartup;
 
             // Transition through FSM states properly
-            // Idle → Editing (when we start executing)
-            if (stateManager.CurrentState == PlaygroundState.Idle)
+            // Always ensure we're in a valid starting state
+            if (stateManager.CurrentState != PlaygroundState.Editing)
             {
-                stateManager.TransitionTo(PlaygroundState.Editing);
+                // Reset to Idle first if we're in any terminal state
+                if (stateManager.CurrentState == PlaygroundState.Success ||
+                    stateManager.CurrentState == PlaygroundState.Error)
+                {
+                    stateManager.TransitionTo(PlaygroundState.Idle);
+                }
+
+                // Now transition to Editing
+                if (stateManager.CurrentState == PlaygroundState.Idle)
+                {
+                    stateManager.TransitionTo(PlaygroundState.Editing);
+                }
             }
 
             // Validate

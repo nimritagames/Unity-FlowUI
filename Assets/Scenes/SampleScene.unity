@@ -174,6 +174,11 @@ MonoBehaviour:
       instanceID: -8018
       uiElement: {fileID: 0}
       elementType: 1
+    - name: TestButton
+      fullPath: Canvas/TestButton
+      instanceID: -1554
+      uiElement: {fileID: 0}
+      elementType: 1
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
