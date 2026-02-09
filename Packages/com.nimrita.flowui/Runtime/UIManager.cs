@@ -63,7 +63,8 @@ public class UIManager : MonoBehaviour
                 }
                 else
                 {
-                    LogWarning($"UIManager: UI element '{reference.name}' is missing or has been destroyed.");
+                    LogWarning(
+                        $"UIManager initialization warning: reference '{reference.name}' in category '{category.name}' points to a missing/destroyed object. Reassign or remove this entry.");
                 }
             }
         }
@@ -77,7 +78,8 @@ public class UIManager : MonoBehaviour
     {
         if (uiElement == null)
         {
-            LogError("UIManager: Attempted to add a null UI element.");
+            LogError(
+                "UIManager add failed: attempted to register a null UI element. Ensure a valid GameObject is passed to AddUIReference.");
             return;
         }
 
@@ -88,7 +90,8 @@ public class UIManager : MonoBehaviour
 
         if (IsReferenceAlreadyAdded(fullPath, instanceID))
         {
-            LogWarning($"UIManager: Duplicate UI element '{uiElement.name}' attempted to be added. Skipping.");
+            LogWarning(
+                $"UIManager add skipped: '{uiElement.name}' is already registered (duplicate path or instance ID).");
             return;
         }
 
@@ -126,7 +129,8 @@ public class UIManager : MonoBehaviour
     {
         if (transform == null)
         {
-            LogError("UIManager: Null transform provided for GetFullPath.");
+            LogError(
+                "UIManager path resolution failed: received a null transform while computing full path.");
             return string.Empty;
         }
 
