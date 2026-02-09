@@ -41,7 +41,7 @@ namespace Nimrita.FlowUI.Editor.Playground
         /// Detects what was created during execution by diffing the scene.
         /// Call this right AFTER user code executes.
         /// </summary>
-        public void EndExecution()
+        public void EndExecution(Transform recoveryParent = null)
         {
             // Find all NEW objects (created during execution)
             GameObject[] allObjects = Object.FindObjectsOfType<GameObject>();
@@ -64,6 +64,20 @@ namespace Nimrita.FlowUI.Editor.Playground
             {
                 string names = string.Join(", ", newObjects.Select(o => o.name));
                 Debug.Log($"[Playground] ✓ Created: {names}");
+            }
+
+            // Re-parent leaked objects to recovery parent if provided
+            if (recoveryParent != null)
+            {
+                foreach (var obj in newObjects)
+                {
+                    if (obj == null) continue;
+                    if (obj.transform.parent == null)
+                    {
+                        obj.transform.SetParent(recoveryParent);
+                        Debug.LogWarning($"[Playground] 👻 Caught leaked object: {obj.name}");
+                    }
+                }
             }
         }
 

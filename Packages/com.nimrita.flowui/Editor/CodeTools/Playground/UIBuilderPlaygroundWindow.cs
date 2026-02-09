@@ -26,6 +26,8 @@ namespace Nimrita.FlowUI.Editor.Playground
         private UIManager targetUIManager;
         private bool showLineNumbers = true;
         private float leftMargin = 40f;
+        private string compilerLabel = "Compiler: Unknown";
+        private Color compilerLabelColor = Color.gray;
 
         // Live Mode State
         private bool liveModeEnabled = true; // ON by default!
@@ -64,6 +66,8 @@ namespace Nimrita.FlowUI.Editor.Playground
             {
                 compiler = roslynCompiler;
                 Debug.Log("[Playground] ✅ Using UnityRoslynCompiler (10× faster!)");
+                compilerLabel = "Compiler: Roslyn";
+                compilerLabelColor = new Color(0.5f, 1f, 0.5f);
             }
             else
             {
@@ -72,6 +76,8 @@ namespace Nimrita.FlowUI.Editor.Playground
                     : "Roslyn self-test failed (no error details)";
                 compiler = new FastPlaygroundCompiler();
                 Debug.Log($"[Playground] ✅ Using FastPlaygroundCompiler (Roslyn unavailable). Reason: {reason}");
+                compilerLabel = "Compiler: Fallback";
+                compilerLabelColor = new Color(1f, 0.8f, 0.5f);
             }
 
             containerTracker = new ContainerTracker();
@@ -242,9 +248,20 @@ namespace Nimrita.FlowUI.Editor.Playground
                 alignment = TextAnchor.MiddleLeft
             };
 
-            EditorGUI.LabelField(new Rect(statusRect.x + 10, statusRect.y, statusRect.width - 20, statusRect.height), statusText, statusStyle);
+            float padding = 10f;
+            EditorGUI.LabelField(new Rect(statusRect.x + padding, statusRect.y, statusRect.width - 2 * padding, statusRect.height), statusText, statusStyle);
 
-            // Show stats on the right
+            // Show compiler + stats on the right
+            var compilerRect = new Rect(statusRect.xMax - 320, statusRect.y, 140, statusRect.height);
+            var statsRect = new Rect(statusRect.xMax - 170, statusRect.y, 160, statusRect.height);
+
+            GUIStyle compilerStyle = new GUIStyle(EditorStyles.miniLabel)
+            {
+                normal = { textColor = compilerLabelColor },
+                alignment = TextAnchor.MiddleRight
+            };
+            EditorGUI.LabelField(compilerRect, compilerLabel, compilerStyle);
+
             if (liveModeEnabled)
             {
                 var stats = liveEngine.GetStats();
@@ -256,7 +273,7 @@ namespace Nimrita.FlowUI.Editor.Playground
                     alignment = TextAnchor.MiddleRight
                 };
 
-                EditorGUI.LabelField(new Rect(statusRect.x, statusRect.y, statusRect.width - 10, statusRect.height), statsText, statsStyle);
+                EditorGUI.LabelField(statsRect, statsText, statsStyle);
             }
         }
 

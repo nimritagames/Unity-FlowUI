@@ -21,6 +21,7 @@ namespace Nimrita.FlowUI.Editor.Playground
         // Dependencies
         private readonly IPlaygroundCompiler compiler;
         private readonly ContainerTracker containerTracker;
+        private readonly UIStateTracker backupTracker;
         private readonly SmartDebouncer debouncer;
         private readonly PlaygroundStateManager stateManager;
         private readonly Action<ExecutionStatus> onStatusChanged;
@@ -42,6 +43,7 @@ namespace Nimrita.FlowUI.Editor.Playground
         {
             this.compiler = compiler ?? throw new ArgumentNullException(nameof(compiler));
             this.containerTracker = containerTracker ?? throw new ArgumentNullException(nameof(containerTracker));
+            this.backupTracker = new UIStateTracker();
             this.debouncer = new SmartDebouncer();
             this.stateManager = new PlaygroundStateManager();
             this.stateManager.LogTransitions = true; // Enable transition logging
@@ -185,6 +187,7 @@ namespace Nimrita.FlowUI.Editor.Playground
                 failedExecutions++;
                 stateManager.TransitionTo(PlaygroundState.Error, errorMsg);
                 NotifyStatus(ExecutionStatus.CreateError(errorMsg));
+                debouncer.MarkErrored(code);
                 return ExecutionResult.CreateError(errorMsg);
             }
 
@@ -206,12 +209,14 @@ namespace Nimrita.FlowUI.Editor.Playground
 
                 // Begin tracking (create container root)
                 containerTracker.BeginExecution();
+                backupTracker.BeginExecution();
 
                 // Execute! Pass UIManager AND root container transform
                 executeMethod.Invoke(null, new object[] { targetUIManager, containerTracker.RootTransform });
 
                 // End tracking (collect created objects from container)
                 containerTracker.EndExecution();
+                backupTracker.EndExecution(containerTracker.RootTransform);
 
                 // Mark scene dirty
                 EditorUtility.SetDirty(targetUIManager);
@@ -229,9 +234,6 @@ namespace Nimrita.FlowUI.Editor.Playground
                 stateManager.TransitionTo(PlaygroundState.Success);
                 NotifyStatus(ExecutionStatus.CreateSuccess(totalTime, objectCount, compilationResult.WasCached));
 
-                // Return to Idle state, ready for next execution
-                stateManager.TransitionTo(PlaygroundState.Idle);
-
                 return ExecutionResult.CreateSuccess(totalTime, objectCount);
             }
             catch (Exception ex)
@@ -245,6 +247,7 @@ namespace Nimrita.FlowUI.Editor.Playground
                 string errorMsg = $"Execution failed: {ex.InnerException?.Message ?? ex.Message}";
                 stateManager.TransitionTo(PlaygroundState.Error, errorMsg);
                 NotifyStatus(ExecutionStatus.CreateError(errorMsg));
+                debouncer.MarkErrored(code);
 
                 // Return to Idle state, ready for next execution
                 stateManager.TransitionTo(PlaygroundState.Idle);

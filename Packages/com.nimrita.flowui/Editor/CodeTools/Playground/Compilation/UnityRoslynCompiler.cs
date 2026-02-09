@@ -52,6 +52,8 @@ namespace Nimrita.FlowUI.Editor.Playground
 
             try
             {
+                userCode = PlaygroundCodeTransforms.ApplyAll(userCode);
+
                 // Lazy initialization
                 if (!isInitialized)
                 {
@@ -390,7 +392,36 @@ namespace Nimrita.FlowUI.Editor.Playground
             sb.AppendLine("    {");
             sb.AppendLine($"        public static void {METHOD_NAME}(UIManager uiManager, Transform playgroundRoot)");
             sb.AppendLine("        {");
+            sb.AppendLine("            LoopGuard.Reset();");
             sb.AppendLine(IndentCode(userCode, 12));
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        // Helper to redirect coroutines to the safe host");
+            sb.AppendLine("        private static Coroutine StartCoroutine(System.Collections.IEnumerator routine)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            if (Nimrita.FlowUI.Editor.Playground.PlaygroundContext.CoroutineHost != null)");
+            sb.AppendLine("                return Nimrita.FlowUI.Editor.Playground.PlaygroundContext.CoroutineHost.Run(routine);");
+            sb.AppendLine("            return null;");
+            sb.AppendLine("        }");
+            sb.AppendLine("    }");
+            sb.AppendLine();
+            sb.AppendLine("    internal static class LoopGuard");
+            sb.AppendLine("    {");
+            sb.AppendLine("        private const int MAX_ITERATIONS = 500000;");
+            sb.AppendLine("        private static int iterationCount = 0;");
+            sb.AppendLine();
+            sb.AppendLine("        public static void Reset()");
+            sb.AppendLine("        {");
+            sb.AppendLine("            iterationCount = 0;");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        public static void Check()");
+            sb.AppendLine("        {");
+            sb.AppendLine("            iterationCount++;");
+            sb.AppendLine("            if (iterationCount > MAX_ITERATIONS)");
+            sb.AppendLine("            {");
+            sb.AppendLine("                throw new System.InvalidOperationException(\"Playground loop exceeded limit. Potential infinite loop.\");");
+            sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine("    }");
             sb.AppendLine("}");
@@ -680,16 +711,7 @@ namespace Nimrita.FlowUI.Editor.Playground
 
         private bool ShouldIncludeAssembly(string assemblyName)
         {
-            if (string.IsNullOrEmpty(assemblyName)) return false;
-
-            return assemblyName == "mscorlib" ||
-                   assemblyName == "System.Private.CoreLib" ||
-                   assemblyName == "netstandard" ||
-                   assemblyName.StartsWith("System") ||
-                   assemblyName.StartsWith("UnityEngine") ||
-                   assemblyName == "Unity.TextMeshPro" ||
-                   assemblyName.Contains("Assembly-CSharp") ||
-                   assemblyName.Contains("com.nimrita.flowui");
+            return !string.IsNullOrEmpty(assemblyName);
         }
     }
 }

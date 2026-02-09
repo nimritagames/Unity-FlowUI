@@ -115,6 +115,14 @@ namespace Nimrita.FlowUI.Editor.Playground
         }
 
         /// <summary>
+        /// Mark code as processed after an error to avoid immediate re-exec spam.
+        /// </summary>
+        public void MarkErrored(string code)
+        {
+            lastExecutedCode = code;
+        }
+
+        /// <summary>
         /// Reset debouncer state.
         /// </summary>
         public void Reset()
@@ -200,6 +208,14 @@ namespace Nimrita.FlowUI.Editor.Playground
             for (int i = 0; i < code.Length; i++)
             {
                 char c = code[i];
+
+                // Handle escapes inside strings
+                if (inString && c == '\\')
+                {
+                    i++; // skip escaped character
+                    prevChar = c;
+                    continue;
+                }
 
                 // Handle line comments
                 if (!inString && !inChar && !inBlockComment && c == '/' && i + 1 < code.Length && code[i + 1] == '/')

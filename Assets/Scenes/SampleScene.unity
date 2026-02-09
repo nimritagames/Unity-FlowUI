@@ -199,6 +199,26 @@ MonoBehaviour:
       instanceID: -7864
       uiElement: {fileID: 0}
       elementType: 1
+    - name: Play Button
+      fullPath: __PLAYGROUND_ROOT__/Canvas/Play Button
+      instanceID: -1870
+      uiElement: {fileID: 0}
+      elementType: 1
+    - name: MyButton
+      fullPath: __PLAYGROUND_ROOT__/Canvas/MyButton
+      instanceID: -1938
+      uiElement: {fileID: 0}
+      elementType: 1
+    - name: MyButton
+      fullPath: __PLAYGROUND_ROOT__/Canvas/MyButton
+      instanceID: -26250
+      uiElement: {fileID: 0}
+      elementType: 1
+    - name: MyButton
+      fullPath: __PLAYGROUND_ROOT__/Canvas/MyButton
+      instanceID: -26556
+      uiElement: {fileID: 0}
+      elementType: 1
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0

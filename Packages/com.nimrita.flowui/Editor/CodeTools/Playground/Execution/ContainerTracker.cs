@@ -1,6 +1,8 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.SceneManagement;
 
 namespace Nimrita.FlowUI.Editor.Playground
 {
@@ -22,14 +24,17 @@ namespace Nimrita.FlowUI.Editor.Playground
         private const string ROOT_NAME = "__PLAYGROUND_ROOT__";
 
         private GameObject rootContainer;
+        private PlaygroundCoroutineHost coroutineHost;
         private List<GameObject> createdObjects = new List<GameObject>();
         private int currentExecutionId = 0;
+        private readonly HashSet<int> baselineObjects = new HashSet<int>();
 
         /// <summary>
         /// Get the current root container transform.
         /// User code will parent UI objects to this.
         /// </summary>
         public Transform RootTransform => rootContainer?.transform;
+        public PlaygroundCoroutineHost CoroutineHost => coroutineHost;
 
         /// <summary>
         /// Get count of tracked objects (for stats).
@@ -52,8 +57,13 @@ namespace Nimrita.FlowUI.Editor.Playground
             // Clean up any previous execution
             CleanupPrevious();
 
+            CaptureBaseline();
+
             // Create new root container
             rootContainer = new GameObject(ROOT_NAME);
+            coroutineHost = rootContainer.AddComponent<PlaygroundCoroutineHost>();
+            PlaygroundContext.RootTransform = rootContainer.transform;
+            PlaygroundContext.CoroutineHost = coroutineHost;
 
             // Hide from hierarchy (optional - can be made visible for debugging)
             rootContainer.hideFlags = HideFlags.DontSave;
@@ -87,15 +97,7 @@ namespace Nimrita.FlowUI.Editor.Playground
                 }
             }
 
-            // Move objects to scene root for visibility
-            // (They stay tracked, but users can see/interact with them)
-            foreach (GameObject obj in createdObjects)
-            {
-                if (obj != null)
-                {
-                    obj.transform.SetParent(null);
-                }
-            }
+            CaptureStrayObjects();
 
             Debug.Log($"[ContainerTracker] Execution #{currentExecutionId} - Tracked {createdObjects.Count} objects");
         }
@@ -125,6 +127,10 @@ namespace Nimrita.FlowUI.Editor.Playground
             }
 
             createdObjects.Clear();
+            baselineObjects.Clear();
+            coroutineHost = null;
+            PlaygroundContext.RootTransform = null;
+            PlaygroundContext.CoroutineHost = null;
 
             if (destroyedCount > 0)
             {
@@ -145,6 +151,9 @@ namespace Nimrita.FlowUI.Editor.Playground
                 Object.DestroyImmediate(rootContainer);
                 rootContainer = null;
             }
+            coroutineHost = null;
+            PlaygroundContext.RootTransform = null;
+            PlaygroundContext.CoroutineHost = null;
 
             Debug.Log("[ContainerTracker] Tracking cleared (objects preserved)");
         }
@@ -156,6 +165,56 @@ namespace Nimrita.FlowUI.Editor.Playground
         {
             return $"Execution #{currentExecutionId}, Tracking {createdObjects.Count} objects";
         }
+
+        private void CaptureBaseline()
+        {
+            baselineObjects.Clear();
+            foreach (var go in SceneGameObjectsSnapshot())
+            {
+                baselineObjects.Add(go.GetInstanceID());
+            }
+        }
+
+        private void CaptureStrayObjects()
+        {
+            foreach (var go in SceneGameObjectsSnapshot())
+            {
+                int id = go.GetInstanceID();
+                if (baselineObjects.Contains(id)) continue;
+                if (createdObjects.Contains(go)) continue;
+                if (rootContainer != null && go == rootContainer) continue;
+
+                createdObjects.Add(go);
+            }
+        }
+
+        private IEnumerable<GameObject> SceneGameObjectsSnapshot()
+        {
+            var scene = SceneManager.GetActiveScene();
+            var roots = scene.GetRootGameObjects();
+
+            foreach (var root in roots)
+            {
+                foreach (var go in Traverse(root))
+                {
+                    yield return go;
+                }
+            }
+        }
+
+        private IEnumerable<GameObject> Traverse(GameObject root)
+        {
+            yield return root;
+
+            var t = root.transform;
+            for (int i = 0; i < t.childCount; i++)
+            {
+                foreach (var child in Traverse(t.GetChild(i).gameObject))
+                {
+                    yield return child;
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -165,6 +224,15 @@ namespace Nimrita.FlowUI.Editor.Playground
     public static class PlaygroundContext
     {
         public static Transform RootTransform { get; set; }
+        public static PlaygroundCoroutineHost CoroutineHost { get; set; }
+    }
+
+    public class PlaygroundCoroutineHost : MonoBehaviour
+    {
+        public Coroutine Run(System.Collections.IEnumerator routine)
+        {
+            return StartCoroutine(routine);
+        }
     }
 }
 #endif
