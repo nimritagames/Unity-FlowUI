@@ -188,7 +188,8 @@ public class UIManager : MonoBehaviour
         }
         else
         {
-            LogWarning($"UIManager: No reference found with path '{fullPath}'.");
+            LogWarning(
+                $"UIManager remove failed: no element is registered for key '{fullPath}'. Verify the path before removing.");
         }
     }
 
@@ -214,7 +215,8 @@ public class UIManager : MonoBehaviour
         }
         else
         {
-            LogWarning($"UIManager: No reference found with instance ID '{instanceID}'.");
+            LogWarning(
+                $"UIManager remove failed: no element is registered for instance ID '{instanceID}'. Verify the ID before removing.");
         }
     }
 
@@ -227,22 +229,24 @@ public class UIManager : MonoBehaviour
         }
         else
         {
-            LogWarning($"UIManager: Invalid instance ID format '{instanceIDString}'.");
+            LogWarning(
+                $"UIManager lookup failed: instance ID value '{instanceIDString}' is not a valid integer. Pass a numeric instance ID.");
         }
     }
 
     /// <summary>
-    /// Gets a UI reference by full hierarchical path.
+    /// Gets a UI reference by full hierarchical path with type validation.
     /// </summary>
     private GameObject GetUIReference(UIElementType elementType, string key)
     {
-        if (uiReferenceByPath.TryGetValue(key, out UIReference reference))
+        if (!uiReferenceByPath.TryGetValue(key, out UIReference reference))
         {
-            return reference.uiElement;
+            LogWarning(
+                $"UIManager lookup failed: no element is registered for key '{key}'. Verify the path or reinitialize UI references.");
+            return null;
         }
 
-        LogWarning($"UIManager: No reference found with path '{key}'.");
-        return null;
+        return ValidateAndReturnReference(elementType, key, reference, source: "path");
     }
 
     /// <summary>
@@ -255,22 +259,119 @@ public class UIManager : MonoBehaviour
             return GetUIReferenceByInstanceID(instanceID);
         }
 
-        LogWarning($"UIManager: Invalid instance ID format '{instanceIDString}'.");
+        LogWarning(
+            $"UIManager lookup failed: instance ID value '{instanceIDString}' is not a valid integer. Pass a numeric instance ID.");
+        return null;
+    }
+
+    private GameObject GetUIReferenceByInstanceID(string instanceIDString, UIElementType expectedType)
+    {
+        if (int.TryParse(instanceIDString, out int instanceID))
+        {
+            return GetUIReferenceByInstanceID(instanceID, expectedType);
+        }
+
+        LogWarning(
+            $"UIManager lookup failed: instance ID value '{instanceIDString}' is not a valid integer. Pass a numeric instance ID.");
         return null;
     }
 
     private GameObject GetUIReferenceByInstanceID(int instanceID)
     {
-        if (instanceIDToPathMap.TryGetValue(instanceID, out string path))
+        if (!instanceIDToPathMap.TryGetValue(instanceID, out string path))
         {
-            if (uiReferenceByPath.TryGetValue(path, out UIReference reference))
-            {
-                return reference.uiElement;
-            }
+            LogWarning(
+                $"UIManager lookup failed: no element is registered for instance ID '{instanceID}'. Verify the ID or reinitialize UI references.");
+            return null;
         }
 
-        LogWarning($"UIManager: No reference found with instance ID '{instanceID}'.");
-        return null;
+        if (!uiReferenceByPath.TryGetValue(path, out UIReference reference))
+        {
+            LogWarning(
+                $"UIManager lookup failed: instance ID '{instanceID}' points to missing key '{path}'. The stale index entry was removed.");
+            instanceIDToPathMap.Remove(instanceID);
+            return null;
+        }
+
+        return ValidateAndReturnReference(UIElementType.Unknown, path, reference, source: "instanceID");
+    }
+
+    private GameObject GetUIReferenceByInstanceID(int instanceID, UIElementType expectedType)
+    {
+        if (!instanceIDToPathMap.TryGetValue(instanceID, out string path))
+        {
+            LogWarning(
+                $"UIManager lookup failed: no element is registered for instance ID '{instanceID}'. Verify the ID or reinitialize UI references.");
+            return null;
+        }
+
+        if (!uiReferenceByPath.TryGetValue(path, out UIReference reference))
+        {
+            LogWarning(
+                $"UIManager lookup failed: instance ID '{instanceID}' points to missing key '{path}'. The stale index entry was removed.");
+            instanceIDToPathMap.Remove(instanceID);
+            return null;
+        }
+
+        return ValidateAndReturnReference(expectedType, path, reference, source: "instanceID");
+    }
+
+    private GameObject ValidateAndReturnReference(
+        UIElementType expectedType,
+        string key,
+        UIReference reference,
+        string source)
+    {
+        if (reference == null)
+        {
+            LogWarning(
+                $"UIManager lookup failed: key '{key}' has an invalid null reference entry from {source}. Reinitialize UI references.");
+            return null;
+        }
+
+        if (reference.uiElement == null)
+        {
+            LogWarning(
+                $"UIManager lookup failed: key '{key}' points to a destroyed/missing object. The stale reference was removed; re-register the element if it still exists.");
+            RemoveUIReference(reference.fullPath);
+            return null;
+        }
+
+        if (!IsTypeCompatible(expectedType, reference.elementType))
+        {
+            LogWarning(
+                $"UIManager lookup failed: key '{key}' is registered as '{reference.elementType}', but '{expectedType}' was requested. Use the correct key/type pair or re-register this element with the expected type.");
+            return null;
+        }
+
+        if (expectedType == UIElementType.Panel && reference.elementType == UIElementType.Image)
+        {
+            LogWarning(
+                $"UIManager compatibility mode: key '{key}' is stored as 'Image' but requested as 'Panel'. This still works for now; re-register as 'Panel' to avoid future breakage.");
+        }
+
+        return reference.uiElement;
+    }
+
+    private bool IsTypeCompatible(UIElementType expectedType, UIElementType actualType)
+    {
+        if (expectedType == UIElementType.Unknown)
+        {
+            return true;
+        }
+
+        if (expectedType == actualType)
+        {
+            return true;
+        }
+
+        // Legacy compatibility: older references may have panel entries stored as Image.
+        if (expectedType == UIElementType.Panel && actualType == UIElementType.Image)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     // Efficient type checking using a dictionary
@@ -334,7 +435,8 @@ public class UIManager : MonoBehaviour
             return type;
         }
 
-        LogWarning($"UIManager: Unknown component type '{typeof(T).Name}'.");
+        LogWarning(
+            $"UIManager lookup failed: component type '{typeof(T).Name}' is not mapped to a UIElementType. Add it to componentTypeMap.");
         return UIElementType.Unknown;
     }
 
@@ -346,22 +448,27 @@ public class UIManager : MonoBehaviour
         UIElementType elementType = GetElementTypeFromComponent<T>();
         if (elementType == UIElementType.Unknown)
         {
-            LogWarning($"UIManager: Unknown component type '{typeof(T).Name}'.");
+            LogWarning(
+                $"UIManager lookup failed: component type '{typeof(T).Name}' is not mapped to a UIElementType. Add it to componentTypeMap.");
             return null;
         }
 
-        GameObject uiElement = isInstanceID ? GetUIReferenceByInstanceID(key) : GetUIReference(elementType, key);
+        GameObject uiElement = isInstanceID
+            ? GetUIReferenceByInstanceID(key, elementType)
+            : GetUIReference(elementType, key);
 
         if (uiElement == null)
         {
-            LogWarning($"UIManager: UI element not found for key '{key}'.");
+            LogWarning(
+                $"UIManager lookup failed: no matching UI element was found for key '{key}'. Verify the key, expected type, and registration state.");
             return null;
         }
 
         T component = uiElement.GetComponent<T>();
         if (component == null)
         {
-            LogWarning($"UIManager: Component '{typeof(T).Name}' not found on UI element for key '{key}'.");
+            LogWarning(
+                $"UIManager component lookup failed: key '{key}' resolved, but component '{typeof(T).Name}' is missing on that GameObject.");
         }
         return component;
     }
@@ -379,17 +486,21 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public GameObject GetPanel(string key, bool isInstanceID = false)
     {
-        GameObject uiElement = isInstanceID ? GetUIReferenceByInstanceID(key) : GetUIReference(UIElementType.Panel, key);
+        GameObject uiElement = isInstanceID
+            ? GetUIReferenceByInstanceID(key, UIElementType.Panel)
+            : GetUIReference(UIElementType.Panel, key);
 
         if (uiElement == null)
         {
-            LogWarning($"UIManager: Panel not found for key '{key}'.");
+            LogWarning(
+                $"UIManager panel lookup failed: no panel was found for key '{key}'. Verify the key and panel registration.");
             return null;
         }
 
         if (uiElement.GetComponent<Image>() == null)
         {
-            LogWarning($"UIManager: UI element '{key}' is not a Panel (missing Image component).");
+            LogWarning(
+                $"UIManager panel lookup failed: key '{key}' resolved, but the GameObject is not a valid panel (missing Image component).");
             return null;
         }
 
