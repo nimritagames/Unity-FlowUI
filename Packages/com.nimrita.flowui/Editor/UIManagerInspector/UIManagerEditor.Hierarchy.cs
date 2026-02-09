@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -1702,7 +1702,7 @@ public partial class UIManagerEditor : Editor
 
         if (uiManager != null)
         {
-            foreach (var category in uiManager.GetAllUICategories())
+            foreach (var category in uiManager.GetAllUICategoriesMutable())
             {
                 if (category?.references != null)
                 {

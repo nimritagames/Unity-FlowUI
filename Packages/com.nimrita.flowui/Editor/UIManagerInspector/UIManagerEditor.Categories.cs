@@ -243,7 +243,7 @@ public partial class UIManagerEditor : Editor
         else
         {
             // Select all visible items
-            var categories = uiManager.GetAllUICategories();
+            var categories = uiManager.GetAllUICategoriesMutable();
             if (categories != null)
             {
                 foreach (var category in categories)
@@ -267,7 +267,7 @@ public partial class UIManagerEditor : Editor
 
     private void DrawCategoriesList()
     {
-        var categories = uiManager.GetAllUICategories();
+        var categories = uiManager.GetAllUICategoriesMutable();
 
         if (categories == null || categories.Count == 0)
         {
@@ -370,7 +370,7 @@ public partial class UIManagerEditor : Editor
 
     private void ExpandAllCategories(bool expand)
     {
-        var categories = uiManager.GetAllUICategories();
+        var categories = uiManager.GetAllUICategoriesMutable();
         foreach (var category in categories)
         {
             expandedCategories[category.name] = expand;
@@ -596,7 +596,7 @@ public partial class UIManagerEditor : Editor
         if (evt.shift && lastSelectedItemIndex >= 0 && lastSelectedCategory == categoryName)
         {
             // Select range
-            var category = uiManager.GetAllUICategories().FirstOrDefault(c => c.name == categoryName);
+            var category = uiManager.GetAllUICategoriesMutable().FirstOrDefault(c => c.name == categoryName);
             if (category == null || category.references == null)
                 return;
 
@@ -682,7 +682,7 @@ public partial class UIManagerEditor : Editor
         Undo.RecordObject(uiManager, "Remove UI Reference");
 
         // Find and remove from category
-        foreach (var category in uiManager.GetAllUICategories())
+        foreach (var category in uiManager.GetAllUICategoriesMutable())
         {
             if (category.references.Contains(reference))
             {
@@ -756,7 +756,7 @@ public partial class UIManagerEditor : Editor
         Undo.RecordObject(uiManager, "Remove Selected UI References");
 
         // Find and remove selected references from categories
-        foreach (var category in uiManager.GetAllUICategories())
+        foreach (var category in uiManager.GetAllUICategoriesMutable())
         {
             if (category.references != null)
             {

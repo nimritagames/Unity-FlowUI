@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,7 +20,7 @@ public partial class UIManagerEditor : Editor
         panelHandlerClassPrefix = EditorPrefs.GetString(PANEL_HANDLER_CLASS_PREFIX_KEY, "");
 
         // Get panels for quick reference
-        var panelCategory = uiManager.GetAllUICategories().FirstOrDefault(c => c.name == "Panel");
+        var panelCategory = uiManager.GetAllUICategoriesMutable().FirstOrDefault(c => c.name == "Panel");
         if (panelCategory != null)
         {
             panels = panelCategory.references;
@@ -89,7 +89,7 @@ public partial class UIManagerEditor : Editor
         }
 
         // Get panels
-        var panelCategory = uiManager.GetAllUICategories().FirstOrDefault(c => c.name == "Panel");
+        var panelCategory = uiManager.GetAllUICategoriesMutable().FirstOrDefault(c => c.name == "Panel");
         var panels = panelCategory?.references ?? new List<UIReference>();
 
         // Panel count indicator with enhanced styling
@@ -513,7 +513,7 @@ public partial class UIManagerEditor : Editor
         string panelPath = panelReference.fullPath;
 
         // Find all references whose paths start with the panel's path
-        return uiManager.GetAllUICategories()
+        return uiManager.GetAllUICategoriesMutable()
             .SelectMany(category => category.references)
             .Where(reference => reference.fullPath.StartsWith(panelPath + "/"))
             .ToList();

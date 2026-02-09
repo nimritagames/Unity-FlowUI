@@ -548,7 +548,7 @@ public partial class UIManagerEditor : Editor
     {
         missingReferences.Clear();
 
-        foreach (var category in uiManager.GetAllUICategories())
+        foreach (var category in uiManager.GetAllUICategoriesMutable())
         {
             foreach (var reference in category.references)
             {
@@ -693,7 +693,7 @@ public partial class UIManagerEditor : Editor
     // {
     //     Undo.RecordObject(uiManager, "Remove UI Reference");
 
-    //     foreach (var category in uiManager.GetAllUICategories())
+    //     foreach (var category in uiManager.GetAllUICategoriesMutable())
     //     {
     //         if (category.references.Remove(reference))
     //         {

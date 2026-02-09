@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -497,7 +497,7 @@ public partial class UIManagerEditor : Editor
         if (string.IsNullOrEmpty(searchQuery))
             return Array.Empty<UIReference>();
 
-        return uiManager.GetAllUICategories()
+        return uiManager.GetAllUICategoriesMutable()
             .SelectMany(category => category.references)
             .Where(reference => reference.name.IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0)
             .Take(10) // Limit to 10 results for performance

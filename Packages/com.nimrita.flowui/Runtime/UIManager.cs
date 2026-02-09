@@ -452,6 +452,18 @@ public class UIManager : MonoBehaviour
     /// Gets all UI categories.
     /// </summary>
     /// <returns>List of all UI categories.</returns>
+    public IReadOnlyList<UICategory> GetAllUICategoriesReadOnly()
+    {
+        return uiCategories;
+    }
+
+#if UNITY_EDITOR
+    public List<UICategory> GetAllUICategoriesMutable()
+    {
+        return uiCategories;
+    }
+#endif
+
     public List<UICategory> GetAllUICategories()
     {
         return uiCategories;
@@ -676,3 +688,4 @@ public class UIManager : MonoBehaviour
 
     #endregion
 }
+

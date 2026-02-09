@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System;
 using System.IO;
 using System.Linq;
@@ -330,7 +330,7 @@ public partial class UIManagerEditor : Editor
         };
 
         EditorGUILayout.LabelField(
-            $"UI Elements: {addedUIElements.Count} | Categories: {uiManager.GetAllUICategories().Count()}",
+            $"UI Elements: {addedUIElements.Count} | Categories: {uiManager.GetAllUICategoriesMutable().Count()}",
             countStyle
         );
 
@@ -410,7 +410,7 @@ public partial class UIManagerEditor : Editor
 
     private bool ValidateUIReferences()
     {
-        var allReferences = uiManager.GetAllUICategories()
+        var allReferences = uiManager.GetAllUICategoriesMutable()
             .SelectMany(c => c.references)
             .ToList();
 
@@ -589,7 +589,7 @@ public partial class UIManagerEditor : Editor
     private void GenerateNestedStructure(StringBuilder sb, string sanitizedSceneName)
     {
         // Get all UI elements grouped by their hierarchy
-        var allElements = uiManager.GetAllUICategories()
+        var allElements = uiManager.GetAllUICategoriesMutable()
             .SelectMany(category => category.references.Select(r => new
             {
                 Category = category.name,

@@ -443,7 +443,7 @@ public partial class UIManagerEditor : Editor
 
     private int CountUIElementsByType(string typeName, UIManager manager)
     {
-        var elements = manager.GetAllUICategories()
+        var elements = manager.GetAllUICategoriesMutable()
             .FirstOrDefault(c => c.name.Equals(typeName, StringComparison.OrdinalIgnoreCase))?.references;
 
         return elements?.Count ?? 0;
@@ -451,7 +451,7 @@ public partial class UIManagerEditor : Editor
 
     private string GetFirstPanelName(UIManager manager)
     {
-        var panelCategory = manager.GetAllUICategories()
+        var panelCategory = manager.GetAllUICategoriesMutable()
             .FirstOrDefault(c => c.name.Equals("Panel", StringComparison.OrdinalIgnoreCase));
 
         if (panelCategory != null && panelCategory.references.Count > 0)
@@ -531,7 +531,7 @@ public partial class UIManagerEditor : Editor
 
         // Generate sample methods for actual UI elements
         // Add sample methods for buttons
-        var buttonCategory = uiManager.GetAllUICategories().FirstOrDefault(c => c.name == "Button");
+        var buttonCategory = uiManager.GetAllUICategoriesMutable().FirstOrDefault(c => c.name == "Button");
         if (buttonCategory != null && buttonCategory.references.Any())
         {
             sb.AppendLine("        private void SetupButtons()");
@@ -566,7 +566,7 @@ public partial class UIManagerEditor : Editor
         }
 
         // Add panel methods if there are any panels
-        var panelCategory = uiManager.GetAllUICategories().FirstOrDefault(c => c.name == "Panel");
+        var panelCategory = uiManager.GetAllUICategoriesMutable().FirstOrDefault(c => c.name == "Panel");
         if (panelCategory != null && panelCategory.references.Any())
         {
             string sanitizedName = SanitizeIdentifier(panelCategory.references[0].name);
@@ -1040,7 +1040,7 @@ public partial class UIManagerEditor : Editor
 
     private void GenerateUserEventHandlers(StringBuilder sb, string type, UIManager manager)
     {
-        var elements = manager.GetAllUICategories()
+        var elements = manager.GetAllUICategoriesMutable()
             .FirstOrDefault(c => c.name.Equals(type, StringComparison.OrdinalIgnoreCase))?.references;
 
         if (elements == null || !elements.Any())
@@ -1157,7 +1157,7 @@ public partial class UIManagerEditor : Editor
 
         foreach (var type in types)
         {
-            var elements = manager.GetAllUICategories()
+            var elements = manager.GetAllUICategoriesMutable()
                 .FirstOrDefault(c => c.name.Equals(type, StringComparison.OrdinalIgnoreCase))?.references;
 
             if (elements == null) continue;
@@ -1172,7 +1172,7 @@ public partial class UIManagerEditor : Editor
 
     private void GenerateSetupForTypePartial(StringBuilder sb, string type, UIManager manager, string sanitizedSceneName)
     {
-        var elements = manager.GetAllUICategories()
+        var elements = manager.GetAllUICategoriesMutable()
             .FirstOrDefault(c => c.name.Equals(type, StringComparison.OrdinalIgnoreCase))?.references;
 
         if (elements == null || !elements.Any())
@@ -1228,7 +1228,7 @@ public partial class UIManagerEditor : Editor
 
     private void GeneratePartialMethodDeclarations(StringBuilder sb, string type, UIManager manager, HashSet<string> addedMethods)
     {
-        var elements = manager.GetAllUICategories()
+        var elements = manager.GetAllUICategoriesMutable()
             .FirstOrDefault(c => c.name.Equals(type, StringComparison.OrdinalIgnoreCase))?.references;
 
         if (elements == null || !elements.Any())
@@ -1285,7 +1285,7 @@ public partial class UIManagerEditor : Editor
 
     private void GenerateSetupForType(StringBuilder sb, string type, UIManager manager)
     {
-        var elements = manager.GetAllUICategories()
+        var elements = manager.GetAllUICategoriesMutable()
             .FirstOrDefault(c => c.name.Equals(type, StringComparison.OrdinalIgnoreCase))?.references;
 
         if (elements == null || !elements.Any())
@@ -1372,7 +1372,7 @@ public partial class UIManagerEditor : Editor
 
     private void GenerateHandlersForType(StringBuilder sb, string type, UIManager manager)
     {
-        var elements = manager.GetAllUICategories()
+        var elements = manager.GetAllUICategoriesMutable()
             .FirstOrDefault(c => c.name.Equals(type, StringComparison.OrdinalIgnoreCase))?.references;
 
         if (elements == null || !elements.Any())
