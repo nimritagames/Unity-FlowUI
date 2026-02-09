@@ -35,6 +35,7 @@ public class UIManager : MonoBehaviour
 
     // Lookup map for instance IDs to paths (faster than storing full references twice)
     private Dictionary<int, string> instanceIDToPathMap = new Dictionary<int, string>();
+    private Dictionary<string, UICategory> categoryByName = new Dictionary<string, UICategory>(StringComparer.Ordinal);
 
     private void Awake()
     {
@@ -48,6 +49,7 @@ public class UIManager : MonoBehaviour
     {
         uiReferenceByPath.Clear();
         instanceIDToPathMap.Clear();
+        RebuildCategoryIndex();
 
         foreach (var category in uiCategories)
         {
@@ -90,12 +92,7 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        UICategory category = uiCategories.Find(cat => cat.name == categoryName);
-        if (category == null)
-        {
-            category = new UICategory { name = categoryName };
-            uiCategories.Add(category);
-        }
+        UICategory category = GetOrCreateCategory(categoryName);
 
         UIReference reference = new UIReference
         {
@@ -180,8 +177,7 @@ public class UIManager : MonoBehaviour
 
             uiReferenceByPath.Remove(fullPath);
 
-            UICategory category = uiCategories.Find(cat => cat.name == reference.elementType.ToString());
-            if (category != null)
+            if (TryGetCategory(reference.elementType.ToString(), out UICategory category))
             {
                 category.references.Remove(reference);
             }
@@ -206,8 +202,7 @@ public class UIManager : MonoBehaviour
                 uiReferenceByPath.Remove(fullPath);
                 instanceIDToPathMap.Remove(instanceID);
 
-                UICategory category = uiCategories.Find(cat => cat.name == reference.elementType.ToString());
-                if (category != null)
+                if (TryGetCategory(reference.elementType.ToString(), out UICategory category))
                 {
                     category.references.Remove(reference);
                 }
@@ -424,6 +419,53 @@ public class UIManager : MonoBehaviour
         return uiCategories;
     }
 
+    private void RebuildCategoryIndex()
+    {
+        categoryByName.Clear();
+
+        foreach (UICategory category in uiCategories)
+        {
+            if (category == null)
+            {
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(category.name))
+            {
+                continue;
+            }
+
+            if (!categoryByName.ContainsKey(category.name))
+            {
+                categoryByName.Add(category.name, category);
+            }
+        }
+    }
+
+    private bool TryGetCategory(string categoryName, out UICategory category)
+    {
+        if (string.IsNullOrWhiteSpace(categoryName))
+        {
+            category = null;
+            return false;
+        }
+
+        return categoryByName.TryGetValue(categoryName, out category);
+    }
+
+    private UICategory GetOrCreateCategory(string categoryName)
+    {
+        if (TryGetCategory(categoryName, out UICategory category))
+        {
+            return category;
+        }
+
+        category = new UICategory { name = categoryName };
+        uiCategories.Add(category);
+        categoryByName[categoryName] = category;
+        return category;
+    }
+
     #endregion
 
     #region Generic UI Component Management
@@ -568,6 +610,7 @@ public class UIManager : MonoBehaviour
     {
         uiReferenceByPath.Clear();
         instanceIDToPathMap.Clear();
+        categoryByName.Clear();
         pathCache.Clear();
         activePanels.Clear();
     }
