@@ -171,12 +171,8 @@ public class UIManager : MonoBehaviour
         {
             return false;
         }
-
-        string expectedPath = transform.parent != null
-            ? $"{GetFullPath(transform.parent)}/{transform.name}"
-            : transform.name;
-
-        return string.Equals(cacheEntry.Path, expectedPath, StringComparison.Ordinal);
+        
+        return true;
     }
 
     private void GetPathRecursive(Transform current, StringBuilder pathBuilder)
