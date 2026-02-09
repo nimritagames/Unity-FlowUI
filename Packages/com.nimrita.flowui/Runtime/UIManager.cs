@@ -113,7 +113,14 @@ public class UIManager : MonoBehaviour
         return uiReferenceByPath.ContainsKey(fullPath) || instanceIDToPathMap.ContainsKey(instanceID);
     }
 
-    private Dictionary<Transform, string> pathCache = new Dictionary<Transform, string>();
+    private struct PathCacheEntry
+    {
+        public string Path;
+        public int ParentInstanceId;
+        public string NameAtCache;
+    }
+
+    private Dictionary<Transform, PathCacheEntry> pathCache = new Dictionary<Transform, PathCacheEntry>();
 
     private string GetFullPath(Transform transform)
     {
@@ -123,9 +130,10 @@ public class UIManager : MonoBehaviour
             return string.Empty;
         }
 
-        if (pathCache.TryGetValue(transform, out string cachedPath))
+        if (pathCache.TryGetValue(transform, out PathCacheEntry cacheEntry) &&
+            IsPathCacheEntryValid(transform, cacheEntry))
         {
-            return cachedPath;
+            return cacheEntry.Path;
         }
 
         // Use StringBuilder for more efficient string concatenation
@@ -133,8 +141,38 @@ public class UIManager : MonoBehaviour
         GetPathRecursive(transform, pathBuilder);
 
         string path = pathBuilder.ToString();
-        pathCache[transform] = path;
+        pathCache[transform] = new PathCacheEntry
+        {
+            Path = path,
+            ParentInstanceId = transform.parent != null ? transform.parent.GetInstanceID() : 0,
+            NameAtCache = transform.name
+        };
         return path;
+    }
+
+    private bool IsPathCacheEntryValid(Transform transform, PathCacheEntry cacheEntry)
+    {
+        if (transform == null)
+        {
+            return false;
+        }
+
+        if (!string.Equals(transform.name, cacheEntry.NameAtCache, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        int currentParentId = transform.parent != null ? transform.parent.GetInstanceID() : 0;
+        if (currentParentId != cacheEntry.ParentInstanceId)
+        {
+            return false;
+        }
+
+        string expectedPath = transform.parent != null
+            ? $"{GetFullPath(transform.parent)}/{transform.name}"
+            : transform.name;
+
+        return string.Equals(cacheEntry.Path, expectedPath, StringComparison.Ordinal);
     }
 
     private void GetPathRecursive(Transform current, StringBuilder pathBuilder)
