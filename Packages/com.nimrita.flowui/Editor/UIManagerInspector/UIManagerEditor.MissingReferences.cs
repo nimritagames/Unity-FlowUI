@@ -346,7 +346,7 @@ public partial class UIManagerEditor : Editor
 
             // ID section
             EditorGUILayout.LabelField("Instance ID:", headerTextStyle);
-            EditorGUILayout.SelectableLabel(missingRef.instanceID, pathStyle, GUILayout.Height(20));
+            EditorGUILayout.SelectableLabel(missingRef.instanceID.ToString(), pathStyle, GUILayout.Height(20));
 
             EditorGUILayout.Space(5);
             EditorGUILayout.EndVertical();
@@ -607,7 +607,7 @@ public partial class UIManagerEditor : Editor
 
         reference.uiElement = replacement;
         reference.fullPath = GetFullPath(replacement.transform);
-        reference.instanceID = replacement.GetInstanceID().ToString();
+        reference.instanceID = replacement.GetInstanceID();
 
         uiManager.InitializeDictionaries();
         EditorUtility.SetDirty(uiManager);

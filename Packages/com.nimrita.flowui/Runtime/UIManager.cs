@@ -103,7 +103,7 @@ public class UIManager : MonoBehaviour
             uiElement = uiElement,
             elementType = type,
             fullPath = fullPath,
-            instanceID = instanceID.ToString()
+            instanceID = instanceID
         };
 
         category.references.Add(reference);
@@ -212,8 +212,9 @@ public class UIManager : MonoBehaviour
                 instanceID = reference.uiElement.GetInstanceID();
                 instanceIDToPathMap.Remove(instanceID);
             }
-            else if (int.TryParse(reference.instanceID, out instanceID))
+            else if (reference.instanceID != 0)
             {
+                instanceID = reference.instanceID;
                 instanceIDToPathMap.Remove(instanceID);
             }
 
