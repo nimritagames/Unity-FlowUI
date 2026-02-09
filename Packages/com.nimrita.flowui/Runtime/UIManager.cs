@@ -121,6 +121,7 @@ public class UIManager : MonoBehaviour
         public string Path;
         public int ParentInstanceId;
         public string NameAtCache;
+        public int HierarchySignature;
     }
 
     private Dictionary<Transform, PathCacheEntry> pathCache = new Dictionary<Transform, PathCacheEntry>();
@@ -149,7 +150,8 @@ public class UIManager : MonoBehaviour
         {
             Path = path,
             ParentInstanceId = transform.parent != null ? transform.parent.GetInstanceID() : 0,
-            NameAtCache = transform.name
+            NameAtCache = transform.name,
+            HierarchySignature = ComputeHierarchySignature(transform)
         };
         return path;
     }
@@ -171,8 +173,27 @@ public class UIManager : MonoBehaviour
         {
             return false;
         }
-        
-        return true;
+
+        return cacheEntry.HierarchySignature == ComputeHierarchySignature(transform);
+    }
+
+    // Allocation-free hierarchy fingerprint used to validate cached paths
+    // without rebuilding full path strings.
+    private int ComputeHierarchySignature(Transform transform)
+    {
+        unchecked
+        {
+            int hash = 17;
+            Transform current = transform;
+            while (current != null)
+            {
+                hash = (hash * 31) + current.GetInstanceID();
+                hash = (hash * 31) + current.name.GetHashCode();
+                current = current.parent;
+            }
+
+            return hash;
+        }
     }
 
     private void GetPathRecursive(Transform current, StringBuilder pathBuilder)
