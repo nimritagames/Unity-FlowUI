@@ -822,10 +822,8 @@ public partial class UIManagerEditor : Editor
             return state;
         }
 
-        // Auto-expand logic with search awareness
-        bool autoExpand = isRoot ||
-                         (!string.IsNullOrEmpty(searchQuery) && ShouldExpandForSearch(transform)) ||
-                         (string.IsNullOrEmpty(searchQuery) && transform.childCount <= 3); // Auto-expand small hierarchies
+        // Collapsed by default - only auto-expand for search results
+        bool autoExpand = !string.IsNullOrEmpty(searchQuery) && ShouldExpandForSearch(transform);
 
         foldoutStates[transform] = !autoExpand;
         return foldoutStates[transform];
