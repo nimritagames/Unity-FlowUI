@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
 
 /// <summary>
@@ -125,6 +124,8 @@ public class UIManager : MonoBehaviour
     }
 
     private Dictionary<Transform, PathCacheEntry> pathCache = new Dictionary<Transform, PathCacheEntry>();
+    private readonly List<Transform> ancestorBuffer = new List<Transform>(16);
+    private readonly StringBuilder pathBuilderCached = new StringBuilder(128);
 
     private string GetFullPath(Transform transform)
     {
@@ -141,11 +142,27 @@ public class UIManager : MonoBehaviour
             return cacheEntry.Path;
         }
 
-        // Use StringBuilder for more efficient string concatenation
-        StringBuilder pathBuilder = new StringBuilder(64);
-        GetPathRecursive(transform, pathBuilder);
+        // Collect ancestors iteratively to avoid recursion overhead
+        ancestorBuffer.Clear();
+        Transform current = transform;
+        while (current != null)
+        {
+            ancestorBuffer.Add(current);
+            current = current.parent;
+        }
 
-        string path = pathBuilder.ToString();
+        // Build path from root to leaf
+        pathBuilderCached.Clear();
+        for (int i = ancestorBuffer.Count - 1; i >= 0; i--)
+        {
+            if (i < ancestorBuffer.Count - 1)
+            {
+                pathBuilderCached.Append('/');
+            }
+            pathBuilderCached.Append(ancestorBuffer[i].name);
+        }
+
+        string path = pathBuilderCached.ToString();
         pathCache[transform] = new PathCacheEntry
         {
             Path = path,
@@ -196,16 +213,6 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void GetPathRecursive(Transform current, StringBuilder pathBuilder)
-    {
-        if (current.parent != null)
-        {
-            GetPathRecursive(current.parent, pathBuilder);
-            pathBuilder.Append('/');
-        }
-        pathBuilder.Append(current.name);
-    }
-
     /// <summary>
     /// Clears the path cache to free memory.
     /// </summary>
@@ -222,17 +229,13 @@ public class UIManager : MonoBehaviour
     {
         if (uiReferenceByPath.TryGetValue(fullPath, out UIReference reference))
         {
-            // Find and remove the instanceID mapping
-            int instanceID;
             if (reference.uiElement != null)
             {
-                instanceID = reference.uiElement.GetInstanceID();
-                instanceIDToPathMap.Remove(instanceID);
+                instanceIDToPathMap.Remove(reference.uiElement.GetInstanceID());
             }
             else if (reference.instanceID != 0)
             {
-                instanceID = reference.instanceID;
-                instanceIDToPathMap.Remove(instanceID);
+                instanceIDToPathMap.Remove(reference.instanceID);
             }
 
             uiReferenceByPath.Remove(fullPath);
@@ -562,8 +565,6 @@ public class UIManager : MonoBehaviour
         UIElementType elementType = GetElementTypeFromComponent<T>();
         if (elementType == UIElementType.Unknown)
         {
-            LogWarning(
-                $"UIManager lookup failed: component type '{typeof(T).Name}' is not mapped to a UIElementType. Add it to componentTypeMap.");
             return null;
         }
 
@@ -644,22 +645,22 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    private readonly List<GameObject> panelDeactivateBuffer = new List<GameObject>();
+
     private void HandlePanelActivation(GameObject panel, bool deactivateOthers, bool keepLastPanel)
     {
         if (deactivateOthers)
         {
-            // Create a temp list to avoid collection modification during iteration
-            List<GameObject> panelsToDeactivate = new List<GameObject>(activePanels.Count);
+            panelDeactivateBuffer.Clear();
             foreach (var activePanel in activePanels)
             {
                 if (activePanel != panel && (!keepLastPanel || activePanel != lastActivePanel))
                 {
-                    panelsToDeactivate.Add(activePanel);
+                    panelDeactivateBuffer.Add(activePanel);
                 }
             }
 
-            // Now deactivate the panels
-            foreach (var panelToDeactivate in panelsToDeactivate)
+            foreach (var panelToDeactivate in panelDeactivateBuffer)
             {
                 panelToDeactivate.SetActive(false);
                 activePanels.Remove(panelToDeactivate);
@@ -684,6 +685,8 @@ public class UIManager : MonoBehaviour
         instanceIDToPathMap.Clear();
         categoryByName.Clear();
         pathCache.Clear();
+        ancestorBuffer.Clear();
+        panelDeactivateBuffer.Clear();
         activePanels.Clear();
     }
 
