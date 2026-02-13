@@ -26,6 +26,11 @@ public partial class UIManagerEditor : Editor
     // Toggle for showing inactive elements
     private bool showInactiveElements = true;
 
+    // Phase 2: Hierarchy caching to avoid recalculation every frame
+    private List<Canvas> cachedHierarchyCanvases = null;
+    private int cachedCanvasesHierarchyHash = -1;
+    private bool hierarchyCacheDirty = true;
+
     // Cached GUIStyles for hierarchy (avoid per-frame allocations)
     private static GUIStyle cachedInactiveToggleStyle;
     private static GUIStyle cachedActionButtonStyle;
@@ -670,34 +675,44 @@ public partial class UIManagerEditor : Editor
             GUILayout.Height(scrollViewHeight)
         );
 
-        // Get canvases with optimized filtering (avoid LINQ in OnGUI)
+        // Phase 2: Use cached hierarchy data if available and valid
         var currentScene = uiManager.gameObject.scene;
-        var allCanvases = FindAllObjectsOfType<Canvas>(showInactiveElements);
+        int currentHierarchyHash = GetSceneHierarchyHash();
 
-        // Filter and collect canvases in single pass
-        List<Canvas> filteredCanvases = new List<Canvas>(allCanvases.Count);
-        for (int i = 0; i < allCanvases.Count; i++)
+        // Rebuild cache if hierarchy changed or cache is dirty
+        if (hierarchyCacheDirty || cachedHierarchyCanvases == null ||
+            cachedCanvasesHierarchyHash != currentHierarchyHash)
         {
-            if (allCanvases[i].gameObject.scene == currentScene)
+            var allCanvases = FindAllObjectsOfType<Canvas>(showInactiveElements);
+
+            // Filter and collect canvases in single pass
+            cachedHierarchyCanvases = new List<Canvas>(allCanvases.Count);
+            for (int i = 0; i < allCanvases.Count; i++)
             {
-                filteredCanvases.Add(allCanvases[i]);
+                if (allCanvases[i].gameObject.scene == currentScene)
+                {
+                    cachedHierarchyCanvases.Add(allCanvases[i]);
+                }
             }
+
+            // Sort by sortingOrder then by name (manual sort avoids LINQ)
+            cachedHierarchyCanvases.Sort((a, b) =>
+            {
+                int orderCompare = a.sortingOrder.CompareTo(b.sortingOrder);
+                return orderCompare != 0 ? orderCompare : string.Compare(a.name, b.name, StringComparison.Ordinal);
+            });
+
+            cachedCanvasesHierarchyHash = currentHierarchyHash;
+            hierarchyCacheDirty = false;
         }
 
-        // Sort by sortingOrder then by name (manual sort avoids LINQ)
-        filteredCanvases.Sort((a, b) =>
-        {
-            int orderCompare = a.sortingOrder.CompareTo(b.sortingOrder);
-            return orderCompare != 0 ? orderCompare : string.Compare(a.name, b.name, StringComparison.Ordinal);
-        });
-
-        if (filteredCanvases.Count == 0)
+        if (cachedHierarchyCanvases.Count == 0)
         {
             DrawEmptyHierarchyMessage();
         }
         else
         {
-            DrawHierarchyContent(filteredCanvases);
+            DrawHierarchyContent(cachedHierarchyCanvases);
         }
 
         EditorGUILayout.EndScrollView();
@@ -774,7 +789,7 @@ public partial class UIManagerEditor : Editor
         // Skip inactive elements if not showing them
         if (!showInactiveElements && !transform.gameObject.activeSelf && !isRoot) return;
 
-        // Use the optimized search methods
+        // Phase 2: Use cached search results (already implemented in Search.cs)
         bool isMatchingSearch = IsMatchingSearch(transform);
 
         // If not matching search and not a root item, check children recursively
@@ -1711,6 +1726,10 @@ public partial class UIManagerEditor : Editor
         transformCache.Clear();
         childCountCache.Clear();
         selectedUIElements.Clear();
+
+        // Phase 2: Mark hierarchy cache as dirty
+        hierarchyCacheDirty = true;
+        cachedHierarchyCanvases = null;
 
         // Reset hover state
         lastHoveredButton = -1;
