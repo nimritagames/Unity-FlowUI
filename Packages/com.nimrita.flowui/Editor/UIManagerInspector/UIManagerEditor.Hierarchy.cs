@@ -26,6 +26,16 @@ public partial class UIManagerEditor : Editor
     // Toggle for showing inactive elements
     private bool showInactiveElements = true;
 
+    // Cached GUIStyles for hierarchy (avoid per-frame allocations)
+    private static GUIStyle cachedInactiveToggleStyle;
+    private static GUIStyle cachedActionButtonStyle;
+    private static GUIStyle cachedCounterStyle;
+    private static GUIStyle cachedScrollViewStyle;
+    private static GUIStyle cachedHelpBoxStyle;
+    private static GUIStyle cachedSummaryStyle;
+    private static GUIStyle cachedNameStyle;
+    private static GUIStyle cachedHierarchyButtonStyle;
+
     // Enhanced responsive breakpoints
     private float GetCurrentEditorWidth()
     {
@@ -110,8 +120,24 @@ public partial class UIManagerEditor : Editor
         };
     }
 
+    private static void InitializeHierarchyCachedStyles()
+    {
+        if (cachedInactiveToggleStyle == null)
+        {
+            cachedInactiveToggleStyle = new GUIStyle(EditorStyles.label);
+            cachedActionButtonStyle = new GUIStyle(EditorStyles.miniButton);
+            cachedCounterStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedScrollViewStyle = new GUIStyle(EditorStyles.helpBox);
+            cachedHelpBoxStyle = new GUIStyle(EditorStyles.helpBox);
+            cachedSummaryStyle = new GUIStyle(EditorStyles.miniLabel);
+            cachedNameStyle = new GUIStyle(EditorStyles.label);
+            cachedHierarchyButtonStyle = new GUIStyle(EditorStyles.miniButton);
+        }
+    }
+
     private void DrawHierarchySection()
     {
+        InitializeHierarchyCachedStyles();
         ResponsiveMode mode = GetResponsiveMode();
         var extendedMode = GetExtendedResponsiveMode();
 
@@ -207,7 +233,9 @@ public partial class UIManagerEditor : Editor
         var extendedMode = GetExtendedResponsiveMode();
 
         int toggleFontSize = GetAdaptiveFontSize(11);
-        GUIStyle toggleStyle = new GUIStyle(EditorStyles.label) { fontSize = toggleFontSize };
+
+        // Use cached style
+        cachedInactiveToggleStyle.fontSize = toggleFontSize;
 
         string toggleText = extendedMode == ExtendedResponsiveMode.ExtraSmall ?
             "Show Inactive" : "Show Inactive Elements";
@@ -219,7 +247,7 @@ public partial class UIManagerEditor : Editor
         bool prevShowInactive = showInactiveElements;
         showInactiveElements = EditorGUILayout.ToggleLeft(
             new GUIContent(toggleText, tooltip),
-            showInactiveElements, toggleStyle);
+            showInactiveElements, cachedInactiveToggleStyle);
 
         if (prevShowInactive != showInactiveElements)
         {
@@ -238,13 +266,11 @@ public partial class UIManagerEditor : Editor
         float buttonHeight = GetAdaptiveRowHeight() - 4f;
         int buttonFontSize = GetAdaptiveFontSize(11);
 
-        GUIStyle actionButtonStyle = new GUIStyle(EditorStyles.miniButton)
-        {
-            fixedHeight = buttonHeight,
-            fontSize = buttonFontSize,
-            alignment = TextAnchor.MiddleCenter,
-            padding = new RectOffset(4, 4, 2, 2)
-        };
+        // Use cached style
+        cachedActionButtonStyle.fixedHeight = buttonHeight;
+        cachedActionButtonStyle.fontSize = buttonFontSize;
+        cachedActionButtonStyle.alignment = TextAnchor.MiddleCenter;
+        cachedActionButtonStyle.padding = new RectOffset(4, 4, 2, 2);
 
         // Responsive button configurations
         var buttons = new[]
@@ -272,16 +298,16 @@ public partial class UIManagerEditor : Editor
         {
             case ExtendedResponsiveMode.ExtraSmall:
             case ExtendedResponsiveMode.Small:
-                DrawVerticalButtonLayout(buttons, actionButtonStyle, buttonHeight);
+                DrawVerticalButtonLayout(buttons, cachedActionButtonStyle, buttonHeight);
                 break;
 
             case ExtendedResponsiveMode.Medium:
-                DrawGridButtonLayout(buttons, actionButtonStyle, 2);
+                DrawGridButtonLayout(buttons, cachedActionButtonStyle, 2);
                 break;
 
             case ExtendedResponsiveMode.Large:
             case ExtendedResponsiveMode.ExtraLarge:
-                DrawHorizontalButtonLayout(buttons, actionButtonStyle);
+                DrawHorizontalButtonLayout(buttons, cachedActionButtonStyle);
                 break;
         }
     }
@@ -375,13 +401,11 @@ public partial class UIManagerEditor : Editor
         float buttonHeight = GetAdaptiveRowHeight() - 4f;
         int buttonFontSize = GetAdaptiveFontSize(11);
 
-        GUIStyle actionButtonStyle = new GUIStyle(EditorStyles.miniButton)
-        {
-            fixedHeight = buttonHeight,
-            fontSize = buttonFontSize,
-            alignment = TextAnchor.MiddleCenter,
-            padding = new RectOffset(4, 4, 2, 2)
-        };
+        // Use cached style
+        cachedHierarchyButtonStyle.fixedHeight = buttonHeight;
+        cachedHierarchyButtonStyle.fontSize = buttonFontSize;
+        cachedHierarchyButtonStyle.alignment = TextAnchor.MiddleCenter;
+        cachedHierarchyButtonStyle.padding = new RectOffset(4, 4, 2, 2);
 
         var controlButtons = new[]
         {
@@ -413,16 +437,16 @@ public partial class UIManagerEditor : Editor
         {
             case ExtendedResponsiveMode.ExtraSmall:
             case ExtendedResponsiveMode.Small:
-                DrawVerticalControlButtons(controlButtons, actionButtonStyle, buttonHeight);
+                DrawVerticalControlButtons(controlButtons, cachedHierarchyButtonStyle, buttonHeight);
                 break;
 
             case ExtendedResponsiveMode.Medium:
-                DrawGridControlButtons(controlButtons, actionButtonStyle, 2);
+                DrawGridControlButtons(controlButtons, cachedHierarchyButtonStyle, 2);
                 break;
 
             case ExtendedResponsiveMode.Large:
             case ExtendedResponsiveMode.ExtraLarge:
-                DrawHorizontalControlButtons(controlButtons, actionButtonStyle);
+                DrawHorizontalControlButtons(controlButtons, cachedHierarchyButtonStyle);
                 break;
         }
     }
@@ -576,11 +600,10 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.BeginVertical("box");
 
         int counterFontSize = GetAdaptiveFontSize(12);
-        GUIStyle counterStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            alignment = TextAnchor.MiddleLeft,
-            fontSize = counterFontSize
-        };
+
+        // Use cached style
+        cachedCounterStyle.alignment = TextAnchor.MiddleLeft;
+        cachedCounterStyle.fontSize = counterFontSize;
 
         float counterHeight = GetAdaptiveRowHeight() - 6f;
 
@@ -590,15 +613,15 @@ public partial class UIManagerEditor : Editor
             case ExtendedResponsiveMode.ExtraSmall:
                 // Very compact for extra small screens
                 EditorGUILayout.LabelField($"Added: {addedUIElements.Count} | Sel: {selectedUIElements.Count}",
-                    counterStyle, GUILayout.Height(counterHeight));
+                    cachedCounterStyle, GUILayout.Height(counterHeight));
                 break;
 
             case ExtendedResponsiveMode.Small:
                 // Stack for small screens
                 EditorGUILayout.LabelField($"Added: {addedUIElements.Count}",
-                    counterStyle, GUILayout.Height(counterHeight));
+                    cachedCounterStyle, GUILayout.Height(counterHeight));
                 EditorGUILayout.LabelField($"Selected: {selectedUIElements.Count}",
-                    counterStyle, GUILayout.Height(counterHeight));
+                    cachedCounterStyle, GUILayout.Height(counterHeight));
                 break;
 
             case ExtendedResponsiveMode.Medium:
@@ -607,7 +630,7 @@ public partial class UIManagerEditor : Editor
             default:
                 // Single line for larger screens
                 EditorGUILayout.LabelField($"UI Elements Added: {addedUIElements.Count} | Selected: {selectedUIElements.Count}",
-                    counterStyle, GUILayout.Height(counterHeight));
+                    cachedCounterStyle, GUILayout.Height(counterHeight));
                 break;
         }
 
@@ -632,13 +655,10 @@ public partial class UIManagerEditor : Editor
             _ => 350f
         };
 
-        // Enhanced background styling
-        GUIStyle scrollViewStyle = new GUIStyle(EditorStyles.helpBox)
-        {
-            padding = new RectOffset(0, 0, 0, 0)
-        };
+        // Enhanced background styling - use cached style
+        cachedScrollViewStyle.padding = new RectOffset(0, 0, 0, 0);
 
-        EditorGUILayout.BeginVertical(scrollViewStyle);
+        EditorGUILayout.BeginVertical(cachedScrollViewStyle);
 
         // Adaptive scroll view behavior
         bool showHorizontalScrollbar = extendedMode <= ExtendedResponsiveMode.Small;
@@ -650,20 +670,34 @@ public partial class UIManagerEditor : Editor
             GUILayout.Height(scrollViewHeight)
         );
 
-        // Get canvases with improved filtering
+        // Get canvases with optimized filtering (avoid LINQ in OnGUI)
         var currentScene = uiManager.gameObject.scene;
-        var canvases = FindAllObjectsOfType<Canvas>(showInactiveElements)
-            .Where(c => c.gameObject.scene == currentScene)
-            .OrderBy(c => c.sortingOrder)
-            .ThenBy(c => c.name);
+        var allCanvases = FindAllObjectsOfType<Canvas>(showInactiveElements);
 
-        if (!canvases.Any())
+        // Filter and collect canvases in single pass
+        List<Canvas> filteredCanvases = new List<Canvas>(allCanvases.Count);
+        for (int i = 0; i < allCanvases.Count; i++)
+        {
+            if (allCanvases[i].gameObject.scene == currentScene)
+            {
+                filteredCanvases.Add(allCanvases[i]);
+            }
+        }
+
+        // Sort by sortingOrder then by name (manual sort avoids LINQ)
+        filteredCanvases.Sort((a, b) =>
+        {
+            int orderCompare = a.sortingOrder.CompareTo(b.sortingOrder);
+            return orderCompare != 0 ? orderCompare : string.Compare(a.name, b.name, StringComparison.Ordinal);
+        });
+
+        if (filteredCanvases.Count == 0)
         {
             DrawEmptyHierarchyMessage();
         }
         else
         {
-            DrawHierarchyContent(canvases);
+            DrawHierarchyContent(filteredCanvases);
         }
 
         EditorGUILayout.EndScrollView();
@@ -678,25 +712,24 @@ public partial class UIManagerEditor : Editor
         var extendedMode = GetExtendedResponsiveMode();
 
         int helpBoxFontSize = GetAdaptiveFontSize(11);
-        GUIStyle helpBoxStyle = new GUIStyle(EditorStyles.helpBox)
-        {
-            fontSize = helpBoxFontSize,
-            wordWrap = true,
-            alignment = TextAnchor.MiddleCenter,
-            padding = new RectOffset(10, 10, 20, 20)
-        };
+
+        // Use cached style
+        cachedHelpBoxStyle.fontSize = helpBoxFontSize;
+        cachedHelpBoxStyle.wordWrap = true;
+        cachedHelpBoxStyle.alignment = TextAnchor.MiddleCenter;
+        cachedHelpBoxStyle.padding = new RectOffset(10, 10, 20, 20);
 
         string message = extendedMode <= ExtendedResponsiveMode.Small ?
             "No Canvases found.\nAdd a Canvas to your scene first." :
             "No Canvases found in the current scene. Add a Canvas to your scene first.";
 
-        GUILayout.Label(message, helpBoxStyle);
+        GUILayout.Label(message, cachedHelpBoxStyle);
     }
 
     /// <summary>
     /// Draw hierarchy content with adaptive padding
     /// </summary>
-    private void DrawHierarchyContent(IOrderedEnumerable<Canvas> canvases)
+    private void DrawHierarchyContent(List<Canvas> canvases)
     {
         var extendedMode = GetExtendedResponsiveMode();
 
@@ -846,13 +879,11 @@ public partial class UIManagerEditor : Editor
             EditorGUILayout.BeginHorizontal();
             GUILayout.Space(padding + (indent + 1) * indentSpacing);
 
-            GUIStyle summaryStyle = new GUIStyle(EditorStyles.miniLabel)
-            {
-                fontStyle = FontStyle.Italic,
-                fontSize = GetAdaptiveFontSize(10)
-            };
+            // Use cached style
+            cachedSummaryStyle.fontStyle = FontStyle.Italic;
+            cachedSummaryStyle.fontSize = GetAdaptiveFontSize(10);
 
-            EditorGUILayout.LabelField($"... and {transform.childCount - VISIBLE_COUNT} more children", summaryStyle);
+            EditorGUILayout.LabelField($"... and {transform.childCount - VISIBLE_COUNT} more children", cachedSummaryStyle);
             EditorGUILayout.EndHorizontal();
         }
     }

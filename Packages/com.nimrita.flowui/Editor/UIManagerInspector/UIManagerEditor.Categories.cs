@@ -26,6 +26,9 @@ public partial class UIManagerEditor : Editor
     // Map of category name to expanded state
     private Dictionary<string, bool> expandedCategories = new Dictionary<string, bool>();
 
+    // Cache for textures to avoid repeated allocations
+    private static Dictionary<Color, Texture2D> colorTextureCache = new Dictionary<Color, Texture2D>();
+
     private void DrawCategoriesPanel()
     {
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
@@ -92,9 +95,17 @@ public partial class UIManagerEditor : Editor
 
     private Texture2D MakeColorTexture(Color color)
     {
+        // Use cached texture if available
+        if (colorTextureCache.TryGetValue(color, out Texture2D cachedTexture))
+        {
+            return cachedTexture;
+        }
+
+        // Create and cache new texture
         Texture2D texture = new Texture2D(1, 1);
         texture.SetPixel(0, 0, color);
         texture.Apply();
+        colorTextureCache[color] = texture;
         return texture;
     }
 

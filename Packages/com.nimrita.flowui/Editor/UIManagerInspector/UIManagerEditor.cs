@@ -17,6 +17,25 @@ public partial class UIManagerEditor : Editor
     private List<UIReference> missingReferences = new List<UIReference>();
     private bool isUpdating = false;
 
+    // Cached GUIStyles to prevent per-frame allocations
+    private static GUIStyle cachedTitleStyle;
+    private static GUIStyle cachedLinkStyle;
+    private static GUIStyle cachedWorkflowLabelStyle;
+    private static GUIStyle cachedStepCircleStyle;
+    private static GUIStyle cachedTabNavigationStyle;
+    private static GUIStyle cachedTabTextStyle;
+    private static GUIStyle cachedSectionTitleStyle;
+    private static GUIStyle cachedSectionDescStyle;
+    private static GUIStyle cachedButtonLabelStyle;
+    private static GUIStyle cachedWarningStyle;
+    private static GUIStyle cachedSuccessStyle;
+    private static GUIStyle cachedCategoryHeaderStyle;
+    private static GUIStyle cachedAboutHeaderStyle;
+    private static GUIStyle cachedVersionStyle;
+    private static GUIStyle cachedDescStyle;
+    private static GUIStyle cachedMiniLabelStyle;
+    private static GUIStyle cachedTextMeasureStyle;
+
     // Library Generation Settings
     private string libraryOutputPath;
     private string libraryNamespace;
@@ -122,6 +141,7 @@ public partial class UIManagerEditor : Editor
 
     public override void OnInspectorGUI()
     {
+        InitializeCachedStyles();
         serializedObject.Update();
         DrawTitle();
         DrawWorkflowSteps();
@@ -129,6 +149,37 @@ public partial class UIManagerEditor : Editor
         DrawTabContent();
         DrawProgressIndicator();
         serializedObject.ApplyModifiedProperties();
+    }
+
+    #endregion
+
+    #region Style Initialization
+
+    /// <summary>
+    /// Initializes cached GUIStyles to prevent per-frame allocations.
+    /// </summary>
+    private static void InitializeCachedStyles()
+    {
+        if (cachedTitleStyle == null)
+        {
+            cachedTitleStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedLinkStyle = new GUIStyle(EditorStyles.linkLabel);
+            cachedWorkflowLabelStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedStepCircleStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedTabNavigationStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedTabTextStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedSectionTitleStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedSectionDescStyle = new GUIStyle(EditorStyles.label);
+            cachedButtonLabelStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedWarningStyle = new GUIStyle(EditorStyles.helpBox);
+            cachedSuccessStyle = new GUIStyle(EditorStyles.helpBox);
+            cachedCategoryHeaderStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedAboutHeaderStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedVersionStyle = new GUIStyle(EditorStyles.label);
+            cachedDescStyle = new GUIStyle(EditorStyles.label);
+            cachedMiniLabelStyle = new GUIStyle(EditorStyles.miniLabel);
+            cachedTextMeasureStyle = new GUIStyle(EditorStyles.boldLabel);
+        }
     }
 
     #endregion
@@ -230,15 +281,13 @@ public partial class UIManagerEditor : Editor
         float titleTopPadding = mode == ResponsiveMode.Narrow ? 4f : 8f;
         float titleHeight_Text = mode == ResponsiveMode.Narrow ? 20f : 30f;
 
-        GUIStyle titleStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = titleFontSize,
-            alignment = TextAnchor.MiddleCenter,
-            normal = { textColor = new Color(0.9f, 0.9f, 0.95f) }
-        };
+        // Use cached style
+        cachedTitleStyle.fontSize = titleFontSize;
+        cachedTitleStyle.alignment = TextAnchor.MiddleCenter;
+        cachedTitleStyle.normal.textColor = new Color(0.9f, 0.9f, 0.95f);
 
         // Header with responsive logo
-        EditorGUI.LabelField(new Rect(titleRect.x, titleRect.y + titleTopPadding, titleRect.width, titleHeight_Text), "UI Framework", titleStyle);
+        EditorGUI.LabelField(new Rect(titleRect.x, titleRect.y + titleTopPadding, titleRect.width, titleHeight_Text), "UI Framework", cachedTitleStyle);
 
         // Logo placement with responsive sizing
         Texture2D logo = GetIcon("UIFrameworkLogo");
@@ -255,14 +304,12 @@ public partial class UIManagerEditor : Editor
             int linkFontSize = GetResponsiveFontSize(11, 9, 10);
             float linkTopOffset = mode == ResponsiveMode.Medium ? 32f : 38f;
 
-            GUIStyle linkStyle = new GUIStyle(EditorStyles.linkLabel)
-            {
-                fontSize = linkFontSize,
-                alignment = TextAnchor.MiddleCenter,
-                normal = { textColor = new Color(0.7f, 0.85f, 1f) }
-            };
+            // Use cached style
+            cachedLinkStyle.fontSize = linkFontSize;
+            cachedLinkStyle.alignment = TextAnchor.MiddleCenter;
+            cachedLinkStyle.normal.textColor = new Color(0.7f, 0.85f, 1f);
 
-            if (GUI.Button(new Rect(titleRect.x, titleRect.y + linkTopOffset, titleRect.width, 18), "Quick Start Guide", linkStyle))
+            if (GUI.Button(new Rect(titleRect.x, titleRect.y + linkTopOffset, titleRect.width, 18), "Quick Start Guide", cachedLinkStyle))
             {
                 ShowQuickStartGuide();
             }
@@ -419,12 +466,10 @@ public partial class UIManagerEditor : Editor
 
         DrawStepCircle(circleRect, number.ToString(), borderColor, textColor);
 
-        GUIStyle labelStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            alignment = TextAnchor.MiddleLeft,
-            fontSize = GetResponsiveFontSize(11, 10, 10),
-            normal = { textColor = textColor }
-        };
+        // Use cached style
+        cachedWorkflowLabelStyle.alignment = TextAnchor.MiddleLeft;
+        cachedWorkflowLabelStyle.fontSize = GetResponsiveFontSize(11, 10, 10);
+        cachedWorkflowLabelStyle.normal.textColor = textColor;
 
         Rect labelRect = new Rect(
             position.x + circleSize + 12f,
@@ -433,7 +478,7 @@ public partial class UIManagerEditor : Editor
             position.height
         );
 
-        EditorGUI.LabelField(labelRect, label, labelStyle);
+        EditorGUI.LabelField(labelRect, label, cachedWorkflowLabelStyle);
         HandleStepClick(position, number);
     }
 
@@ -521,14 +566,12 @@ public partial class UIManagerEditor : Editor
             EditorGUI.DrawRect(circleRect, circleColor);
         }
 
-        GUIStyle numberStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            alignment = TextAnchor.MiddleCenter,
-            fontSize = GetResponsiveFontSize(10, 9, 9),
-            normal = { textColor = textColor }
-        };
+        // Use cached style
+        cachedStepCircleStyle.alignment = TextAnchor.MiddleCenter;
+        cachedStepCircleStyle.fontSize = GetResponsiveFontSize(10, 9, 9);
+        cachedStepCircleStyle.normal.textColor = textColor;
 
-        EditorGUI.LabelField(circleRect, number, numberStyle);
+        EditorGUI.LabelField(circleRect, number, cachedStepCircleStyle);
     }
 
     /// <summary>
@@ -587,17 +630,15 @@ public partial class UIManagerEditor : Editor
 
         DrawStepCircle(circleRect, number.ToString(), borderColor, textColor);
 
-        GUIStyle labelStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            alignment = TextAnchor.MiddleLeft,
-            fontSize = GetResponsiveFontSize(11, 10, 10),
-            normal = { textColor = textColor }
-        };
+        // Use cached style
+        cachedWorkflowLabelStyle.alignment = TextAnchor.MiddleLeft;
+        cachedWorkflowLabelStyle.fontSize = GetResponsiveFontSize(11, 10, 10);
+        cachedWorkflowLabelStyle.normal.textColor = textColor;
 
         EditorGUI.LabelField(
             new Rect(position.x + circleSize + 15, position.y, position.width - circleSize - 20, position.height),
             label,
-            labelStyle
+            cachedWorkflowLabelStyle
         );
 
         HandleStepClick(position, number);
@@ -738,14 +779,12 @@ public partial class UIManagerEditor : Editor
             EditorGUI.DrawRect(rect, bgColor);
         }
 
-        GUIStyle buttonStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            alignment = TextAnchor.MiddleCenter,
-            fontSize = GetResponsiveFontSize(12, 10, 11),
-            normal = { textColor = textColor }
-        };
+        // Use cached style
+        cachedTabNavigationStyle.alignment = TextAnchor.MiddleCenter;
+        cachedTabNavigationStyle.fontSize = GetResponsiveFontSize(12, 10, 11);
+        cachedTabNavigationStyle.normal.textColor = textColor;
 
-        EditorGUI.LabelField(rect, symbol, buttonStyle);
+        EditorGUI.LabelField(rect, symbol, cachedTabNavigationStyle);
 
         if (enabled && Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
         {
@@ -872,17 +911,15 @@ public partial class UIManagerEditor : Editor
             string displayText = GetDisplayText(tabTitles[tabIndex], availableWidth);
             int fontSize = GetResponsiveFontSize(11, 9, 10);
 
-            GUIStyle textStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                fontSize = fontSize,
-                alignment = TextAnchor.MiddleLeft,
-                normal = { textColor = contentColor },
-                fontStyle = isSelected ? FontStyle.Bold : FontStyle.Normal
-            };
+            // Use cached style
+            cachedTabTextStyle.fontSize = fontSize;
+            cachedTabTextStyle.alignment = TextAnchor.MiddleLeft;
+            cachedTabTextStyle.normal.textColor = contentColor;
+            cachedTabTextStyle.fontStyle = isSelected ? FontStyle.Bold : FontStyle.Normal;
 
             EditorGUI.LabelField(
                 new Rect(contentStartX, tabRect.y, availableWidth, tabRect.height),
-                displayText, textStyle
+                displayText, cachedTabTextStyle
             );
         }
         else
@@ -920,9 +957,11 @@ public partial class UIManagerEditor : Editor
 
         ResponsiveMode mode = GetResponsiveMode();
         int fontSize = GetResponsiveFontSize(11, 9, 10);
-        GUIStyle measureStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = fontSize };
 
-        if (measureStyle.CalcSize(new GUIContent(originalText)).x <= maxWidth)
+        // Use cached style for text measurement
+        cachedTextMeasureStyle.fontSize = fontSize;
+
+        if (cachedTextMeasureStyle.CalcSize(new GUIContent(originalText)).x <= maxWidth)
             return originalText;
 
         // Apply more aggressive abbreviations in narrow mode
@@ -930,14 +969,14 @@ public partial class UIManagerEditor : Editor
             ApplyAggressiveAbbreviations(originalText) :
             ApplySmartAbbreviations(originalText);
 
-        if (measureStyle.CalcSize(new GUIContent(smartText)).x <= maxWidth)
+        if (cachedTextMeasureStyle.CalcSize(new GUIContent(smartText)).x <= maxWidth)
             return smartText;
 
         // Truncation with ellipsis
         for (int i = originalText.Length - 1; i > 2; i--)
         {
             string truncated = originalText.Substring(0, i) + "…";
-            if (measureStyle.CalcSize(new GUIContent(truncated)).x <= maxWidth)
+            if (cachedTextMeasureStyle.CalcSize(new GUIContent(truncated)).x <= maxWidth)
                 return truncated;
         }
 
@@ -1281,32 +1320,33 @@ public partial class UIManagerEditor : Editor
             _ => 7f
         };
 
-        GUIStyle titleStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = titleFontSize,
-            fontStyle = FontStyle.Bold,
-            alignment = TextAnchor.MiddleLeft,
-            normal = { textColor = new Color(0.95f, 0.95f, 0.98f) },
-            margin = new RectOffset(0, 0, 0, 0),
-            padding = new RectOffset(0, 0, 0, 0)
-        };
+        // Use cached style
+        cachedSectionTitleStyle.fontSize = titleFontSize;
+        cachedSectionTitleStyle.fontStyle = FontStyle.Bold;
+        cachedSectionTitleStyle.alignment = TextAnchor.MiddleLeft;
+        cachedSectionTitleStyle.normal.textColor = new Color(0.95f, 0.95f, 0.98f);
+        cachedSectionTitleStyle.margin = new RectOffset(0, 0, 0, 0);
+        cachedSectionTitleStyle.padding = new RectOffset(0, 0, 0, 0);
 
         // Add text shadow effect for wide screens
         if (mode == ResponsiveMode.Wide)
         {
+            Color originalColor = cachedSectionTitleStyle.normal.textColor;
+            cachedSectionTitleStyle.normal.textColor = new Color(0, 0, 0, 0.3f);
             EditorGUI.LabelField(
                 new Rect(headerRect.x + titlePadding + 1, headerRect.y + titleTopOffset + 1,
                     headerRect.width - (titlePadding * 2), 20),
                 title,
-                new GUIStyle(titleStyle) { normal = { textColor = new Color(0, 0, 0, 0.3f) } }
+                cachedSectionTitleStyle
             );
+            cachedSectionTitleStyle.normal.textColor = originalColor;
         }
 
         // Draw main title
         EditorGUI.LabelField(
             new Rect(headerRect.x + titlePadding, headerRect.y + titleTopOffset,
                 headerRect.width - (titlePadding * 2), 20),
-            title, titleStyle
+            title, cachedSectionTitleStyle
         );
 
         // Draw responsive description
@@ -1316,15 +1356,13 @@ public partial class UIManagerEditor : Editor
             float descTopOffset = baseHeight - bottomPadding + (mode == ResponsiveMode.Narrow ? 2f : 4f);
             float descPadding = GetResponsivePadding(12f);
 
-            GUIStyle descStyle = new GUIStyle(descCalcStyle)
-            {
-                fontSize = descFontSize,
-                wordWrap = true,
-                alignment = TextAnchor.UpperLeft,
-                normal = { textColor = new Color(0.75f, 0.75f, 0.8f) },
-                margin = new RectOffset(0, 0, 0, 0),
-                padding = new RectOffset(0, 0, 0, 0)
-            };
+            // Use cached style
+            cachedSectionDescStyle.fontSize = descFontSize;
+            cachedSectionDescStyle.wordWrap = true;
+            cachedSectionDescStyle.alignment = TextAnchor.UpperLeft;
+            cachedSectionDescStyle.normal.textColor = new Color(0.75f, 0.75f, 0.8f);
+            cachedSectionDescStyle.margin = new RectOffset(0, 0, 0, 0);
+            cachedSectionDescStyle.padding = new RectOffset(0, 0, 0, 0);
 
             // Ensure text doesn't overflow
             float descWidth = headerRect.width - (descPadding * 2);
@@ -1333,7 +1371,7 @@ public partial class UIManagerEditor : Editor
             EditorGUI.LabelField(
                 new Rect(headerRect.x + descPadding, headerRect.y + descTopOffset,
                     descWidth, descHeight),
-                description, descStyle
+                description, cachedSectionDescStyle
             );
         }
 
@@ -1438,14 +1476,13 @@ public partial class UIManagerEditor : Editor
 
         // Responsive button text
         int fontSize = GetResponsiveFontSize(11, 10, 10);
-        GUIStyle buttonLabelStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = fontSize,
-            alignment = TextAnchor.MiddleCenter,
-            normal = { textColor = new Color(0.9f, 0.9f, 0.95f) }
-        };
 
-        EditorGUI.LabelField(position, new GUIContent(label, tooltip), buttonLabelStyle);
+        // Use cached style
+        cachedButtonLabelStyle.fontSize = fontSize;
+        cachedButtonLabelStyle.alignment = TextAnchor.MiddleCenter;
+        cachedButtonLabelStyle.normal.textColor = new Color(0.9f, 0.9f, 0.95f);
+
+        EditorGUI.LabelField(position, new GUIContent(label, tooltip), cachedButtonLabelStyle);
 
         if (Event.current.type == EventType.MouseDown && position.Contains(Event.current.mousePosition))
         {
@@ -1476,14 +1513,12 @@ public partial class UIManagerEditor : Editor
         // Status indicator
         if (badlyNamedCount > 0)
         {
-            var warningStyle = new GUIStyle(EditorStyles.helpBox)
-            {
-                normal = { textColor = new Color(0.8f, 0.6f, 0.2f) },
-                fontSize = 12,
-                wordWrap = true
-            };
+            // Use cached style
+            cachedWarningStyle.normal.textColor = new Color(0.8f, 0.6f, 0.2f);
+            cachedWarningStyle.fontSize = 12;
+            cachedWarningStyle.wordWrap = true;
 
-            EditorGUILayout.LabelField($"⚠️ Found {badlyNamedCount} of {totalElements} elements with naming issues", warningStyle);
+            EditorGUILayout.LabelField($"⚠️ Found {badlyNamedCount} of {totalElements} elements with naming issues", cachedWarningStyle);
             EditorGUILayout.Space(5);
 
             if (GUILayout.Button("🔧 Open Smart Naming Assistant", GUILayout.Height(35)))
@@ -1514,14 +1549,12 @@ public partial class UIManagerEditor : Editor
         }
         else
         {
-            var successStyle = new GUIStyle(EditorStyles.helpBox)
-            {
-                normal = { textColor = new Color(0.2f, 0.7f, 0.3f) },
-                fontSize = 12,
-                wordWrap = true
-            };
+            // Use cached style
+            cachedSuccessStyle.normal.textColor = new Color(0.2f, 0.7f, 0.3f);
+            cachedSuccessStyle.fontSize = 12;
+            cachedSuccessStyle.wordWrap = true;
 
-            EditorGUILayout.LabelField($"✅ All {totalElements} UI elements have proper names!", successStyle);
+            EditorGUILayout.LabelField($"✅ All {totalElements} UI elements have proper names!", cachedSuccessStyle);
             EditorGUILayout.Space(5);
 
             EditorGUILayout.LabelField("Your naming is on point! 🎯", EditorStyles.centeredGreyMiniLabel);
@@ -1637,13 +1670,11 @@ public partial class UIManagerEditor : Editor
         ResponsiveMode mode = GetResponsiveMode();
         int categoryHeaderFontSize = GetResponsiveFontSize(12, 11, 11);
 
-        GUIStyle categoryHeaderStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = categoryHeaderFontSize,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.9f) }
-        };
+        // Use cached style
+        cachedCategoryHeaderStyle.fontSize = categoryHeaderFontSize;
+        cachedCategoryHeaderStyle.normal.textColor = new Color(0.8f, 0.8f, 0.9f);
 
-        EditorGUILayout.LabelField("UI Categories", categoryHeaderStyle);
+        EditorGUILayout.LabelField("UI Categories", cachedCategoryHeaderStyle);
         EditorGUILayout.Space(GetResponsiveSpacing(4f));
 
         EditorGUILayout.PropertyField(uiCategoriesProperty, GUIContent.none);
@@ -1676,40 +1707,37 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
         int aboutHeaderFontSize = GetResponsiveFontSize(12, 11, 11);
-        GUIStyle aboutHeaderStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = aboutHeaderFontSize,
-            alignment = TextAnchor.MiddleCenter,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.9f) }
-        };
 
-        EditorGUILayout.LabelField("About UI Framework", aboutHeaderStyle);
+        // Use cached style
+        cachedAboutHeaderStyle.fontSize = aboutHeaderFontSize;
+        cachedAboutHeaderStyle.alignment = TextAnchor.MiddleCenter;
+        cachedAboutHeaderStyle.normal.textColor = new Color(0.8f, 0.8f, 0.9f);
+
+        EditorGUILayout.LabelField("About UI Framework", cachedAboutHeaderStyle);
         EditorGUILayout.Space(GetResponsiveSpacing(4f));
 
         int versionFontSize = GetResponsiveFontSize(11, 10, 10);
-        GUIStyle versionStyle = new GUIStyle(EditorStyles.label)
-        {
-            fontSize = versionFontSize,
-            alignment = TextAnchor.MiddleCenter,
-            normal = { textColor = new Color(0.7f, 0.7f, 0.8f) }
-        };
 
-        EditorGUILayout.LabelField("Version 1.0.0", versionStyle);
+        // Use cached style
+        cachedVersionStyle.fontSize = versionFontSize;
+        cachedVersionStyle.alignment = TextAnchor.MiddleCenter;
+        cachedVersionStyle.normal.textColor = new Color(0.7f, 0.7f, 0.8f);
+
+        EditorGUILayout.LabelField("Version 1.0.0", cachedVersionStyle);
         EditorGUILayout.Space(GetResponsiveSpacing(6f));
 
         int descFontSize = GetResponsiveFontSize(11, 10, 10);
-        GUIStyle descStyle = new GUIStyle(EditorStyles.label)
-        {
-            fontSize = descFontSize,
-            wordWrap = true,
-            alignment = TextAnchor.MiddleCenter,
-            normal = { textColor = new Color(0.7f, 0.7f, 0.75f) }
-        };
+
+        // Use cached style
+        cachedDescStyle.fontSize = descFontSize;
+        cachedDescStyle.wordWrap = true;
+        cachedDescStyle.alignment = TextAnchor.MiddleCenter;
+        cachedDescStyle.normal.textColor = new Color(0.7f, 0.7f, 0.75f);
 
         EditorGUILayout.LabelField(
             "UI Framework helps you manage Unity UI elements and access them through code. " +
             "Maintain clean architecture with auto-generated code libraries and handlers.",
-            descStyle
+            cachedDescStyle
         );
 
         EditorGUILayout.Space(GetResponsiveSpacing(10f));
