@@ -692,7 +692,11 @@ public partial class UIManagerEditor : Editor
     /// </summary>
     private void ShowQuickStartGuide()
     {
-        UIManagerQuickStartWindow.ShowWindow(uiManager);
+        UIManagerQuickStartWindow.ShowWindow(uiManager, (tabIndex) =>
+        {
+            selectedTab = tabIndex;
+            Repaint();
+        });
     }
 
     /// <summary>
