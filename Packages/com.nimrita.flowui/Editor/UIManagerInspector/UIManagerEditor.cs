@@ -1901,6 +1901,7 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.Space(GetResponsiveSpacing(15f));
 
         // About section with responsive layout
+        ResponsiveMode mode = GetResponsiveMode();
         EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         int aboutHeaderFontSize = GetResponsiveFontSize(12, 11, 11);
