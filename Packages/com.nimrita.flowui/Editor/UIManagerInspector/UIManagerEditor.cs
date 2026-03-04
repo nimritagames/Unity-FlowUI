@@ -83,6 +83,7 @@ public partial class UIManagerEditor : Editor
 
     // Tab system
     private int selectedTab = 0;
+    private bool showDebugInternals = false;
     private string[] tabTitles = new string[] {
         "UI Hierarchy",
         "Library Generation",
@@ -1897,6 +1898,26 @@ public partial class UIManagerEditor : Editor
         );
 
         EditorGUILayout.EndVertical();
+
+        // Debug internals toggle
+        EditorGUILayout.Space(GetResponsiveSpacing(8f));
+        showDebugInternals = EditorGUILayout.Toggle(
+            new GUIContent("Debug Mode", "Show raw serialized data for debugging"),
+            showDebugInternals);
+
+        if (showDebugInternals)
+        {
+            EditorGUILayout.Space(GetResponsiveSpacing(4f));
+            EditorGUILayout.BeginVertical(GetDarkPanelStyle());
+
+            Texture2D debugIcon = EditorGUIUtility.IconContent("d_Debug").image as Texture2D;
+            EditorGUILayout.LabelField(new GUIContent(" Raw Data", debugIcon), EditorStyles.boldLabel);
+            EditorGUILayout.Space(4);
+
+            EditorGUILayout.PropertyField(uiCategoriesProperty, new GUIContent("UI Categories"), true);
+
+            EditorGUILayout.EndVertical();
+        }
 
         EditorGUILayout.Space(GetResponsiveSpacing(15f));
 
