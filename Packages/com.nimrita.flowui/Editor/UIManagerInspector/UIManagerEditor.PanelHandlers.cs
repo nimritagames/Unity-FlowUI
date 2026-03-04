@@ -136,7 +136,7 @@ public partial class UIManagerEditor : Editor
         bool libraryExists = IsLibraryGenerated(uiManager.gameObject.scene.name);
         if (!libraryExists)
         {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
             Rect warningRect = EditorGUILayout.GetControlRect(false, 28);
 
@@ -165,7 +165,7 @@ public partial class UIManagerEditor : Editor
             {
                 EditorGUI.LabelField(
                     warningRect,
-                    "⚠️ Library must be generated first. Please go to the Library Generation tab.",
+                    "Library must be generated first. Please go to the Library Generation tab.",
                     cachedPanelWarningStyle
                 );
             }
@@ -179,7 +179,7 @@ public partial class UIManagerEditor : Editor
         var panels = panelCategory?.references ?? new List<UIReference>();
 
         // Panel count indicator with enhanced styling
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         Rect countRect = EditorGUILayout.GetControlRect(false, 36);
 
@@ -223,7 +223,7 @@ public partial class UIManagerEditor : Editor
         {
             EditorGUILayout.Space(10);
 
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
             // Info text
             EditorGUILayout.LabelField(
@@ -236,10 +236,14 @@ public partial class UIManagerEditor : Editor
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
 
-            if (GUILayout.Button("Go to UI Hierarchy Tab", GUILayout.Width(180), GUILayout.Height(24)))
-            {
-                selectedTab = 0; // Set to the Hierarchy tab index
-            }
+            Rect goToHierarchyRect = GUILayoutUtility.GetRect(180, 28);
+            DrawActionButton(
+                goToHierarchyRect,
+                "Go to UI Hierarchy Tab",
+                "Switch to the UI Hierarchy tab to add panels",
+                () => { selectedTab = 0; },
+                true
+            );
 
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
@@ -301,7 +305,7 @@ public partial class UIManagerEditor : Editor
         DrawSectionHeader("Handler Settings", null);
         EditorGUILayout.Space(5);
 
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         // Output path with browse button
         EditorGUILayout.BeginHorizontal();
@@ -334,7 +338,7 @@ public partial class UIManagerEditor : Editor
         if (string.IsNullOrEmpty(panelHandlerOutputPath) || !panelHandlerOutputPath.StartsWith("Assets"))
         {
             EditorGUILayout.Space(2);
-            EditorGUILayout.HelpBox("Warning: The output path must be inside the 'Assets' folder.", MessageType.Warning);
+            DrawInlineWarning("Output path must be inside the Assets folder.");
         }
 
         EditorGUILayout.Space(8);
@@ -381,7 +385,7 @@ public partial class UIManagerEditor : Editor
         DrawSectionHeader("Panel Binder Component", null);
         EditorGUILayout.Space(5);
 
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         string binderInfoText = "<b>UIPanelBinder</b> automatically connects your panel handler to the correct panel and UI Manager. " +
             "Add this component to the same GameObject as your panel handler component for automatic setup.";
@@ -416,7 +420,7 @@ public partial class UIManagerEditor : Editor
         bool handlerExists = PanelHandlerFileExists(panel);
 
         // Panel box with subtle gradient
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         Rect headerRect = EditorGUILayout.GetControlRect(false, 32);
 
@@ -465,38 +469,34 @@ public partial class UIManagerEditor : Editor
             cachedPanelStatusStyle
         );
 
-        // Generate button
+        // Action buttons
         float buttonX = headerRect.x + headerRect.width - 180;
 
         EditorGUI.BeginDisabledGroup(!IsLibraryGenerated(uiManager.gameObject.scene.name));
 
-        Color defaultColor = GUI.backgroundColor;
-        if (!handlerExists)
-        {
-            GUI.backgroundColor = new Color(0.2f, 0.6f, 1.0f); // Blue for primary action
-        }
-
         string buttonText = handlerExists ? "Regenerate" : "Generate";
-        if (GUI.Button(new Rect(buttonX, headerRect.y + 6, 90, 20), new GUIContent(buttonText)))
+        Color generateColor = handlerExists ? new Color(0.3f, 0.3f, 0.35f) : new Color(0.2f, 0.45f, 0.8f);
+        Rect genRect = new Rect(buttonX, headerRect.y + 6, 90, 20);
+        if (DrawMiniActionButton(genRect, buttonText, generateColor))
         {
             GeneratePanelHandlerTemplate(panel);
         }
-
-        GUI.backgroundColor = defaultColor;
 
         EditorGUI.EndDisabledGroup();
 
         // View code button
         if (handlerExists)
         {
-            if (GUI.Button(new Rect(buttonX + 95, headerRect.y + 6, 75, 20), new GUIContent("View Code")))
+            Rect viewRect = new Rect(buttonX + 95, headerRect.y + 6, 75, 20);
+            if (DrawMiniActionButton(viewRect, "View Code"))
             {
                 PingPanelHandler(panel);
             }
         }
 
         // Select button
-        if (GUI.Button(new Rect(buttonX - 65, headerRect.y + 6, 60, 20), new GUIContent("Select")))
+        Rect selectRect = new Rect(buttonX - 65, headerRect.y + 6, 60, 20);
+        if (DrawMiniActionButton(selectRect, "Select"))
         {
             Selection.activeGameObject = panel.uiElement;
         }

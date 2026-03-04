@@ -154,7 +154,7 @@ public partial class UIManagerEditor : Editor
         if (missingReferences.Any())
         {
             // Status panel with icon and count
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
             Rect statusRect = EditorGUILayout.GetControlRect(false, 36);
 
@@ -192,7 +192,7 @@ public partial class UIManagerEditor : Editor
         else
         {
             // Success status with icon
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
             Rect statusRect = EditorGUILayout.GetControlRect(false, 36);
 
@@ -252,7 +252,7 @@ public partial class UIManagerEditor : Editor
         bool isSelected = missingRef == selectedMissingReference;
 
         // Reference card with styling
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         // Header with enhanced styling
         Rect headerRect = EditorGUILayout.GetControlRect(false, 32);
@@ -293,16 +293,16 @@ public partial class UIManagerEditor : Editor
         Rect fixButtonRect = new Rect(buttonX, headerRect.y + 6, 60, 20);
         Rect removeButtonRect = new Rect(buttonX + 65, headerRect.y + 6, 60, 20);
 
-        // Fix button - use GUI.Button with GUIContent
-        if (GUI.Button(fixButtonRect, new GUIContent("Fix")))
+        // Fix button - styled mini action button
+        if (DrawMiniActionButton(fixButtonRect, "Fix", new Color(0.2f, 0.45f, 0.8f)))
         {
             FixMissingReference(missingRef);
             CheckMissingReferences(); // Refresh the list
             GUIUtility.ExitGUI(); // Prevent layout errors
         }
 
-        // Remove button - use GUI.Button with GUIContent
-        if (GUI.Button(removeButtonRect, new GUIContent("Remove")))
+        // Remove button - styled mini action button (red)
+        if (DrawMiniActionButton(removeButtonRect, "Remove", new Color(0.7f, 0.25f, 0.25f)))
         {
             if (EditorUtility.DisplayDialog("Confirm Remove",
                 $"Are you sure you want to remove '{missingRef.name}'?",
@@ -363,7 +363,7 @@ public partial class UIManagerEditor : Editor
             EditorGUILayout.Space(36); // Space for the header
 
             // Path and ID info with enhanced styling
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
             // Path section
             EditorGUILayout.Space(8);
@@ -394,7 +394,7 @@ public partial class UIManagerEditor : Editor
             if (possibleMatch != null)
             {
                 // Suggestion box with highlighted background
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
                 Rect suggestionRect = EditorGUILayout.GetControlRect(false, 40);
 
@@ -424,11 +424,9 @@ public partial class UIManagerEditor : Editor
                     cachedMissingSuggestionTextStyle
                 );
 
-                // Apply fix button
-                if (GUI.Button(
-                    new Rect(suggestionRect.x + suggestionRect.width - 90, suggestionRect.y + 10, 80, 20),
-                    "Apply Fix"
-                ))
+                // Apply fix button - styled green
+                Rect applyFixRect = new Rect(suggestionRect.x + suggestionRect.width - 90, suggestionRect.y + 10, 80, 20);
+                if (DrawMiniActionButton(applyFixRect, "Apply Fix", new Color(0.2f, 0.55f, 0.25f)))
                 {
                     ApplyFixWithGameObject(missingRef, possibleMatch.gameObject);
                     CheckMissingReferences(); // Refresh the list
@@ -441,7 +439,7 @@ public partial class UIManagerEditor : Editor
             else
             {
                 // No matches found - show error box
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
                 Rect errorRect = EditorGUILayout.GetControlRect(false, 36);
 
@@ -738,12 +736,7 @@ public partial class UIManagerEditor : Editor
     private void RemoveAllMissingReferences()
     {
         Undo.RecordObject(uiManager, "Remove All Missing UI References");
-        int count = missingReferences.Count;
-
-        foreach (var reference in missingReferences.ToList())
-        {
-            RemoveReference(reference);
-        }
+        int count = EditorRemoveUIReferences(r => r.uiElement == null);
 
         missingReferences.Clear();
         selectedMissingReference = null;

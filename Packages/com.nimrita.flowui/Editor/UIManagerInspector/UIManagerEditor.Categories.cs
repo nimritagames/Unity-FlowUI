@@ -13,10 +13,10 @@ public partial class UIManagerEditor : Editor
     private Vector2 categoriesScrollPosition;
     private string filterCategoriesText = "";
     private bool showEmptyCategories = true;
-    private GUIStyle categoryHeaderStyle;
-    private GUIStyle categoryItemStyle;
-    private GUIStyle titleBarStyle;
-    private GUIStyle statusBarStyle;
+    private static GUIStyle categoryHeaderStyle;
+    private static GUIStyle categoryItemStyle;
+    private static GUIStyle titleBarStyle;
+    private static GUIStyle statusBarStyle;
     private Dictionary<string, Color> categoryColors = new Dictionary<string, Color>();
 
     // Support for multi-selection
@@ -39,7 +39,7 @@ public partial class UIManagerEditor : Editor
 
     private void DrawCategoriesPanel()
     {
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         InitializeStyles();
         InitializeCategoriesCachedStyles();
@@ -140,7 +140,7 @@ public partial class UIManagerEditor : Editor
         }
     }
 
-    private Texture2D MakeColorTexture(Color color)
+    private static Texture2D MakeColorTexture(Color color)
     {
         // Use cached texture if available
         if (colorTextureCache.TryGetValue(color, out Texture2D cachedTexture))
@@ -324,7 +324,7 @@ public partial class UIManagerEditor : Editor
 
         if (categories == null || categories.Count == 0)
         {
-            EditorGUILayout.HelpBox("No UI categories found. Add UI elements from the Hierarchy tab.", MessageType.Info);
+            DrawInlineInfo("No UI categories found. Add UI elements from the Hierarchy tab.");
             return;
         }
 
@@ -716,27 +716,8 @@ public partial class UIManagerEditor : Editor
         if (reference == null) return;
 
         Undo.RecordObject(uiManager, "Remove UI Reference");
-
-        // Find and remove from category
-        foreach (var category in uiManager.GetAllUICategoriesMutable())
-        {
-            if (category.references.Contains(reference))
-            {
-                category.references.Remove(reference);
-                break;
-            }
-        }
-
-        // Remove from selected elements if present
-        if (reference.uiElement != null)
-        {
-            selectedUIElements.Remove(reference.uiElement);
-            addedUIElements.Remove(reference.uiElement);
-        }
-
-        // Update manager
+        EditorRemoveUIReference(reference);
         EditorUtility.SetDirty(uiManager);
-        uiManager.InitializeDictionaries();
         Repaint();
     }
 
@@ -786,29 +767,15 @@ public partial class UIManagerEditor : Editor
 
         Undo.RecordObject(uiManager, "Remove Selected UI References");
 
-        // Find and remove selected references from categories
-        foreach (var category in uiManager.GetAllUICategoriesMutable())
-        {
-            if (category.references != null)
-            {
-                category.references.RemoveAll(r => selectedUIElements.Contains(r.uiElement));
-            }
-        }
-
-        // Remove from added elements
-        foreach (var element in selectedUIElements)
-        {
-            addedUIElements.Remove(element);
-        }
+        // Capture the set before clearing
+        var toRemove = new HashSet<GameObject>(selectedUIElements);
+        EditorRemoveUIReferences(r => r.uiElement != null && toRemove.Contains(r.uiElement));
 
         // Clear selection
         selectedUIElements.Clear();
         lastSelectedItemIndex = -1;
         lastSelectedCategory = null;
 
-        // Update manager
-        EditorUtility.SetDirty(uiManager);
-        uiManager.InitializeDictionaries();
         Repaint();
     }
 

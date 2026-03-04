@@ -1144,7 +1144,7 @@ public partial class UIManagerEditor : Editor
     /// </summary>
     private void DrawEnhancedSelectionCheckbox(GameObject gameObject, float rowHeight, ExtendedResponsiveMode mode)
     {
-        bool isAdded = addedUIElements.Contains(gameObject);
+        bool isAdded = uiManager.IsRegistered(gameObject);
         bool hasSupportedComponent = HasSupportedUIComponentCached(gameObject);
 
         if (isAdded || hasSupportedComponent)
@@ -1226,7 +1226,7 @@ public partial class UIManagerEditor : Editor
 
         // Enhanced status-based styling
         GameObject gameObject = transform.gameObject;
-        bool isAdded = addedUIElements.Contains(gameObject);
+        bool isAdded = uiManager.IsRegistered(gameObject);
         bool hasSupportedComponent = HasSupportedUIComponentCached(gameObject);
 
         if (isAdded)
@@ -1340,7 +1340,7 @@ public partial class UIManagerEditor : Editor
     /// </summary>
     private void DrawEnhancedActionButtons(GameObject gameObject, float rowHeight, ExtendedResponsiveMode mode)
     {
-        bool isAdded = addedUIElements.Contains(gameObject);
+        bool isAdded = uiManager.IsRegistered(gameObject);
         bool hasSupportedComponent = HasSupportedUIComponentCached(gameObject);
 
         // Adaptive button sizing
@@ -1470,19 +1470,20 @@ public partial class UIManagerEditor : Editor
         else
         {
             Undo.RecordObject(uiManager, "Add UI Reference");
-            uiManager.AddUIReference(gameObject);
-            EditorUtility.SetDirty(uiManager);
-            addedUIElements.Add(gameObject);
+            if (EditorAddUIElement(gameObject))
+            {
+                EditorUtility.SetDirty(uiManager);
 
-            if (addedUIElements.Count == 1)
-            {
-                ShowQuickTip("First Element Added!",
-                    "Great! Add more elements or go to Library Generation to create code access.");
-            }
-            else
-            {
-                ShowQuickTip("Element Added",
-                    $"'{gameObject.name}' has been added to the UI Manager.");
+                if (addedUIElements.Count == 1)
+                {
+                    ShowQuickTip("First Element Added!",
+                        "Great! Add more elements or go to Library Generation to create code access.");
+                }
+                else
+                {
+                    ShowQuickTip("Element Added",
+                        $"'{gameObject.name}' has been added to the UI Manager.");
+                }
             }
         }
     }
@@ -1595,16 +1596,10 @@ public partial class UIManagerEditor : Editor
 
         foreach (var element in elements)
         {
-            if (!addedUIElements.Contains(element.gameObject))
-            {
-                uiManager.AddUIReference(element.gameObject);
-                addedUIElements.Add(element.gameObject);
+            if (EditorAddUIElement(element.gameObject))
                 addedCount++;
-            }
             else
-            {
                 skippedCount++;
-            }
         }
 
         if (addedCount > 0)
@@ -1641,16 +1636,10 @@ public partial class UIManagerEditor : Editor
 
         foreach (var image in images)
         {
-            if (!addedUIElements.Contains(image.gameObject))
-            {
-                uiManager.AddUIReference(image.gameObject);
-                addedUIElements.Add(image.gameObject);
+            if (EditorAddUIElement(image.gameObject))
                 addedCount++;
-            }
             else
-            {
                 skippedCount++;
-            }
         }
 
         if (addedCount > 0)
@@ -1688,13 +1677,24 @@ public partial class UIManagerEditor : Editor
         // Reset hover state
         lastHoveredButton = -1;
 
+        // Detect and fix stale paths from renames/reparenting
+        int fixedPaths = uiManager.RefreshStalePaths();
+        if (fixedPaths > 0)
+        {
+            uiManager.InitializeDictionaries();
+            EditorUtility.SetDirty(uiManager);
+        }
+
         // Rebuild caches
         BuildAddedUIElementsCache();
 
         // Force repaint
         Repaint();
 
-        ShowQuickTip("Hierarchy Refreshed", "UI hierarchy has been refreshed successfully.");
+        string message = fixedPaths > 0
+            ? $"UI hierarchy refreshed. Fixed {fixedPaths} stale path(s)."
+            : "UI hierarchy has been refreshed successfully.";
+        ShowQuickTip("Hierarchy Refreshed", message);
     }
 
     /// <summary>

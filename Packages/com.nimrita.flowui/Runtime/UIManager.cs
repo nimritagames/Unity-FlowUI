@@ -46,12 +46,19 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void InitializeDictionaries()
     {
+        // Fix stale paths before rebuilding dictionaries
+        RefreshStalePaths();
+
         uiReferenceByPath.Clear();
         instanceIDToPathMap.Clear();
+        pathCache.Clear();
         RebuildCategoryIndex();
 
         foreach (var category in uiCategories)
         {
+            if (category?.references == null)
+                continue;
+
             foreach (var reference in category.references)
             {
                 // Ensure the GameObject reference is still valid
@@ -67,6 +74,113 @@ public class UIManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Detects hierarchy renames/reparenting and updates stored paths to match.
+    /// </summary>
+    public int RefreshStalePaths()
+    {
+        int fixedCount = 0;
+
+        foreach (var category in uiCategories)
+        {
+            if (category?.references == null)
+                continue;
+
+            foreach (var reference in category.references)
+            {
+                if (reference.uiElement == null)
+                    continue;
+
+                string livePath = GetFullPath(reference.uiElement.transform);
+                if (string.Equals(livePath, reference.fullPath, StringComparison.Ordinal))
+                    continue;
+
+                // Path has drifted — update it
+                reference.fullPath = livePath;
+                reference.name = reference.uiElement.name;
+                reference.instanceID = reference.uiElement.GetInstanceID();
+                fixedCount++;
+            }
+        }
+
+        if (fixedCount > 0)
+        {
+            LogWarning($"UIManager: fixed {fixedCount} stale path(s) after hierarchy changes.");
+        }
+
+        return fixedCount;
+    }
+
+    /// <summary>
+    /// Authoritative check whether a GameObject is already registered.
+    /// </summary>
+    public bool IsRegistered(GameObject uiElement)
+    {
+        if (uiElement == null)
+            return false;
+
+        return instanceIDToPathMap.ContainsKey(uiElement.GetInstanceID());
+    }
+
+    /// <summary>
+    /// Validates internal state, returns number of issues found.
+    /// Logs warnings for each problem detected.
+    /// </summary>
+    public int ValidateState()
+    {
+        int issues = 0;
+
+        foreach (var category in uiCategories)
+        {
+            if (category == null)
+            {
+                LogWarning("UIManager validation: found a null category entry.");
+                issues++;
+                continue;
+            }
+
+            if (category.references == null)
+            {
+                LogWarning($"UIManager validation: category '{category.name}' has a null references list.");
+                issues++;
+                continue;
+            }
+
+            for (int i = category.references.Count - 1; i >= 0; i--)
+            {
+                var reference = category.references[i];
+                if (reference == null)
+                {
+                    LogWarning($"UIManager validation: null reference entry in category '{category.name}'.");
+                    category.references.RemoveAt(i);
+                    issues++;
+                    continue;
+                }
+
+                if (reference.uiElement == null)
+                    continue; // Missing refs are handled elsewhere
+
+                int instanceID = reference.uiElement.GetInstanceID();
+
+                // Check instanceID map consistency
+                if (!instanceIDToPathMap.ContainsKey(instanceID))
+                {
+                    LogWarning($"UIManager validation: '{reference.name}' exists in category but missing from instanceID map.");
+                    issues++;
+                }
+
+                // Check path map consistency
+                if (!string.IsNullOrEmpty(reference.fullPath) && !uiReferenceByPath.ContainsKey(reference.fullPath))
+                {
+                    LogWarning($"UIManager validation: '{reference.name}' path '{reference.fullPath}' missing from path map.");
+                    issues++;
+                }
+            }
+        }
+
+        return issues;
     }
 
     /// <summary>

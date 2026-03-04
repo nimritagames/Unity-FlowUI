@@ -118,7 +118,7 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.Space(10);
 
         // Handler status panel with enhanced styling
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         // Status indicator with icon
         Rect statusRect = EditorGUILayout.GetControlRect(false, 36);
@@ -158,7 +158,7 @@ public partial class UIManagerEditor : Editor
         cachedHandlerStatusStyle.normal.textColor = handlerExists ? new Color(0.3f, 0.7f, 0.3f) : new Color(0.7f, 0.7f, 0.8f);
 
         string statusText = handlerExists ?
-            "Handler Status: ? Generated" :
+            "Handler Status: \u2713 Generated" :
             "Handler Status: Not Generated";
 
         EditorGUI.LabelField(
@@ -190,8 +190,16 @@ public partial class UIManagerEditor : Editor
             EditorGUILayout.Space(2);
             EditorGUILayout.BeginHorizontal();
             GUILayout.Space(12);
+
+            Texture2D warnIcon = EditorGUIUtility.IconContent("console.warnicon.sml").image as Texture2D;
+            if (warnIcon != null)
+            {
+                GUILayout.Label(warnIcon, GUILayout.Width(16), GUILayout.Height(16));
+                GUILayout.Space(4);
+            }
+
             EditorGUILayout.LabelField(
-                "?? Library must be generated first. Please go to the Library Generation tab.",
+                "Library must be generated first. Please go to the Library Generation tab.",
                 cachedHandlerWarningStyle
             );
             EditorGUILayout.EndHorizontal();
@@ -263,7 +271,7 @@ public partial class UIManagerEditor : Editor
         DrawSectionHeader("Output Settings", null);
         EditorGUILayout.Space(5);
 
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         // Output path with browse button
         EditorGUILayout.BeginHorizontal();
@@ -297,7 +305,7 @@ public partial class UIManagerEditor : Editor
         if (string.IsNullOrEmpty(handlerOutputPath) || !handlerOutputPath.StartsWith("Assets"))
         {
             EditorGUILayout.Space(2);
-            EditorGUILayout.HelpBox("Warning: The output path must be inside the 'Assets' folder.", MessageType.Warning);
+            DrawInlineWarning("Output path must be inside the Assets folder.");
         }
 
         EditorGUILayout.Space(8);
@@ -362,7 +370,7 @@ public partial class UIManagerEditor : Editor
         DrawSectionHeader("Handler Features", "The following features will be included in the generated handler");
         EditorGUILayout.Space(5);
 
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         // Draw feature boxes with icons
         DrawFeatureItem("Component Referencing", "Automatically get references to UI components via UIManager");
@@ -396,7 +404,7 @@ public partial class UIManagerEditor : Editor
         DrawSectionHeader("Usage Example", null);
         EditorGUILayout.Space(5);
 
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         string example =
             "<color=#569CD6>// Add this component to your scene and assign UIManager</color>\n" +
@@ -428,8 +436,17 @@ public partial class UIManagerEditor : Editor
     {
         EditorGUILayout.BeginHorizontal();
 
-        // Checkmark
-        EditorGUILayout.LabelField("?", cachedHandlerCheckStyle, GUILayout.Width(20));
+        // Checkmark icon
+        Texture2D checkIcon = EditorGUIUtility.IconContent("d_forward@2x").image as Texture2D;
+        if (checkIcon != null)
+        {
+            GUILayout.Label(checkIcon, GUILayout.Width(16), GUILayout.Height(16));
+            GUILayout.Space(4);
+        }
+        else
+        {
+            EditorGUILayout.LabelField("\u2713", cachedHandlerCheckStyle, GUILayout.Width(20));
+        }
 
         // Title and description
         EditorGUILayout.BeginVertical();

@@ -130,6 +130,14 @@ public partial class UIManagerEditor : Editor
         // Automatically check for missing references on enable
         CheckMissingReferences();
 
+        // Validate dictionary state and auto-heal if desync detected
+        int validationIssues = uiManager.ValidateState();
+        if (validationIssues > 0)
+        {
+            uiManager.InitializeDictionaries();
+            BuildAddedUIElementsCache();
+        }
+
         // Load icons
         LoadIcons();
 
@@ -154,6 +162,82 @@ public partial class UIManagerEditor : Editor
         DrawTabContent();
         DrawProgressIndicator();
         serializedObject.ApplyModifiedProperties();
+    }
+
+    #endregion
+
+    #region Centralized Add/Remove
+
+    /// <summary>
+    /// Single entry point for adding a UI element from editor code.
+    /// Handles UIManager registration and editor cache sync.
+    /// Caller is responsible for Undo.RecordObject and EditorUtility.SetDirty.
+    /// </summary>
+    private bool EditorAddUIElement(GameObject gameObject)
+    {
+        if (gameObject == null || uiManager.IsRegistered(gameObject))
+            return false;
+
+        uiManager.AddUIReference(gameObject);
+        addedUIElements.Add(gameObject);
+        return true;
+    }
+
+    /// <summary>
+    /// Single entry point for removing a UI reference from editor code.
+    /// Uses UIManager.RemoveUIReference for live elements (inline dictionary update).
+    /// Falls back to direct category removal for missing/null elements.
+    /// Caller is responsible for Undo.RecordObject and EditorUtility.SetDirty.
+    /// </summary>
+    private void EditorRemoveUIReference(UIReference reference)
+    {
+        if (reference == null) return;
+
+        if (reference.uiElement != null && !string.IsNullOrEmpty(reference.fullPath))
+        {
+            // Live element — use UIManager's own remove (handles dictionaries inline)
+            uiManager.RemoveUIReference(reference.fullPath);
+        }
+        else
+        {
+            // Missing/null element — remove directly from category list
+            foreach (var category in uiManager.GetAllUICategoriesMutable())
+            {
+                if (category?.references != null && category.references.Remove(reference))
+                    break;
+            }
+        }
+
+        // Sync editor caches
+        if (reference.uiElement != null)
+        {
+            selectedUIElements.Remove(reference.uiElement);
+            addedUIElements.Remove(reference.uiElement);
+        }
+    }
+
+    /// <summary>
+    /// Bulk remove entry point. Single-pass removal across all categories
+    /// followed by one dictionary rebuild. Handles SetDirty and cache rebuild.
+    /// Caller is responsible for Undo.RecordObject.
+    /// </summary>
+    private int EditorRemoveUIReferences(Predicate<UIReference> predicate)
+    {
+        int count = 0;
+        foreach (var category in uiManager.GetAllUICategoriesMutable())
+        {
+            if (category?.references != null)
+                count += category.references.RemoveAll(r => predicate(r));
+        }
+
+        if (count > 0)
+        {
+            uiManager.InitializeDictionaries();
+            BuildAddedUIElementsCache();
+            EditorUtility.SetDirty(uiManager);
+        }
+
+        return count;
     }
 
     #endregion
@@ -2001,6 +2085,10 @@ public partial class UIManagerEditor : Editor
         categoryName.stringValue = "Default";
 
         serializedObject.ApplyModifiedProperties();
+
+        // Rebuild dictionaries so they match the now-empty state
+        uiManager.ClearPathCache();
+        uiManager.InitializeDictionaries();
 
         foldoutStates.Clear();
         addedUIElements.Clear();

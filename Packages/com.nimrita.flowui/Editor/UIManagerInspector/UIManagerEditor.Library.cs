@@ -97,7 +97,7 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.Space(10);
 
         // Library status panel with enhanced styling
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         // Status indicator with icon
         Rect statusRect = EditorGUILayout.GetControlRect(false, 36);
@@ -219,7 +219,7 @@ public partial class UIManagerEditor : Editor
         DrawSectionHeader("Output Settings", null);
         EditorGUILayout.Space(5);
 
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         // Output path with browse button
         EditorGUILayout.BeginHorizontal();
@@ -253,7 +253,7 @@ public partial class UIManagerEditor : Editor
         if (string.IsNullOrEmpty(libraryOutputPath) || !libraryOutputPath.StartsWith("Assets"))
         {
             EditorGUILayout.Space(2);
-            EditorGUILayout.HelpBox("Warning: The output path must be inside the 'Assets' folder.", MessageType.Warning);
+            DrawInlineWarning("Output path must be inside the Assets folder.");
         }
 
         EditorGUILayout.Space(8);
@@ -320,7 +320,7 @@ public partial class UIManagerEditor : Editor
         DrawSectionHeader("Usage Example", null);
         EditorGUILayout.Space(5);
 
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         string example =
             "<color=#569CD6>// Get a Button component:</color>\n" +

@@ -1065,11 +1065,10 @@ public partial class UIManagerEditor : Editor
             StandardizeUIElementName(uiElement);
         }
 
-        // Now add the UI reference using the original method
+        // Add through the centralized editor add path
         Undo.RecordObject(uiManager, "Add UI Reference");
-        uiManager.AddUIReference(uiElement);
+        EditorAddUIElement(uiElement);
         EditorUtility.SetDirty(uiManager);
-        addedUIElements.Add(uiElement);
     }
 
     #endregion
