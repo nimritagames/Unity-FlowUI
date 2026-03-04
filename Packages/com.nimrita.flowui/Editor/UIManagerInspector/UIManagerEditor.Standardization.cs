@@ -40,6 +40,32 @@ public partial class UIManagerEditor : Editor
     // Dictionary for storing original names before standardization
     private Dictionary<GameObject, string> originalNames = new Dictionary<GameObject, string>();
 
+    // Cached GUIStyles for standardization draw methods
+    private static GUIStyle cachedStdExampleHeaderMiniStyle;
+    private static GUIStyle cachedStdLabelStyle;
+    private static GUIStyle cachedStdExampleHeaderBoldStyle;
+
+    private static void InitializeStandardizationCachedStyles()
+    {
+        if (cachedStdExampleHeaderMiniStyle != null) return;
+
+        cachedStdExampleHeaderMiniStyle = new GUIStyle(EditorStyles.miniBoldLabel)
+        {
+            fontSize = 10
+        };
+
+        cachedStdLabelStyle = new GUIStyle(EditorStyles.miniLabel)
+        {
+            fontSize = 10,
+            fixedWidth = 60
+        };
+
+        cachedStdExampleHeaderBoldStyle = new GUIStyle(EditorStyles.boldLabel)
+        {
+            fontSize = 10
+        };
+    }
+
     /// <summary>
     /// Standardizes the name of a UI element based on its type.
     /// </summary>
@@ -1102,6 +1128,7 @@ public partial class UIManagerEditor : Editor
     // Now update DrawNamingStandardizationSettings to save settings when they change
     private void DrawNamingStandardizationSettings()
     {
+        InitializeStandardizationCachedStyles();
         EditorGUILayout.Space(10);
 
         // Naming Standardization section
@@ -1143,13 +1170,9 @@ public partial class UIManagerEditor : Editor
             EditorGUILayout.Space(5);
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-            GUIStyle exampleHeaderStyle = new GUIStyle(EditorStyles.miniBoldLabel)
-            {
-                fontSize = 10,
-                normal = { textColor = new Color(0.7f, 0.8f, 0.9f) }
-            };
+            cachedStdExampleHeaderMiniStyle.normal.textColor = new Color(0.7f, 0.8f, 0.9f);
 
-            EditorGUILayout.LabelField("Naming Preview:", exampleHeaderStyle);
+            EditorGUILayout.LabelField("Naming Preview:", cachedStdExampleHeaderMiniStyle);
             EditorGUILayout.Space(2);
 
             // Original vs standardized examples
@@ -1234,24 +1257,14 @@ public partial class UIManagerEditor : Editor
     /// </summary>
     private void DrawPreviewExamples()
     {
-        GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel)
-        {
-            fontSize = 10,
-            fixedWidth = 60,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.8f) }
-        };
-
-        GUIStyle exampleHeaderStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 10,
-            normal = { textColor = new Color(0.7f, 0.7f, 0.7f) }
-        };
+        cachedStdLabelStyle.normal.textColor = new Color(0.8f, 0.8f, 0.8f);
+        cachedStdExampleHeaderBoldStyle.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
 
         // Headers
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Original", exampleHeaderStyle, GUILayout.Width(100));
+        EditorGUILayout.LabelField("Original", cachedStdExampleHeaderBoldStyle, GUILayout.Width(100));
         EditorGUILayout.LabelField("→", GUILayout.Width(15));
-        EditorGUILayout.LabelField("Standardized", exampleHeaderStyle);
+        EditorGUILayout.LabelField("Standardized", cachedStdExampleHeaderBoldStyle);
         EditorGUILayout.EndHorizontal();
 
         // Basic Button Example
@@ -1264,7 +1277,7 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.LabelField(buttonName, GUILayout.Width(100));
         EditorGUILayout.LabelField("→", GUILayout.Width(15));
         EditorGUILayout.LabelField(standardizedButtonName);
-        EditorGUILayout.LabelField("(Button)", labelStyle);
+        EditorGUILayout.LabelField("(Button)", cachedStdLabelStyle);
         EditorGUILayout.EndHorizontal();
 
         // Already suffixed panel example
@@ -1277,7 +1290,7 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.LabelField(panelName, GUILayout.Width(100));
         EditorGUILayout.LabelField("→", GUILayout.Width(15));
         EditorGUILayout.LabelField(standardizedPanelName);
-        EditorGUILayout.LabelField("(Panel - already has type)", labelStyle);
+        EditorGUILayout.LabelField("(Panel - already has type)", cachedStdLabelStyle);
         EditorGUILayout.EndHorizontal();
 
         // Child element example
@@ -1286,7 +1299,7 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.LabelField(childText, GUILayout.Width(100));
         EditorGUILayout.LabelField("→", GUILayout.Width(15));
         EditorGUILayout.LabelField($"Play_Button_Text");
-        EditorGUILayout.LabelField("(Text inside Button)", labelStyle);
+        EditorGUILayout.LabelField("(Text inside Button)", cachedStdLabelStyle);
         EditorGUILayout.EndHorizontal();
     }
 

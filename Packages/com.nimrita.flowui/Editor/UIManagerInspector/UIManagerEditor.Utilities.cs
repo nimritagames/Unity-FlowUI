@@ -8,6 +8,19 @@ public partial class UIManagerEditor : Editor
 {
     #region Helper Methods
 
+    // Cached GUIStyles for Utilities
+    private static GUIStyle cachedUtilStatusStyle;
+    private static GUIStyle cachedUtilPercentStyle;
+
+    private static void InitializeUtilitiesCachedStyles()
+    {
+        if (cachedUtilStatusStyle == null)
+        {
+            cachedUtilStatusStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedUtilPercentStyle = new GUIStyle(EditorStyles.boldLabel);
+        }
+    }
+
     /// <summary>
     /// Pings the generated UI Library file in the Project window.
     /// </summary>
@@ -113,6 +126,7 @@ public partial class UIManagerEditor : Editor
 
     private void DrawProgressIndicator()
     {
+        InitializeUtilitiesCachedStyles();
         EditorGUILayout.Space(10);
 
         // Calculate progress
@@ -131,12 +145,9 @@ public partial class UIManagerEditor : Editor
         float innerWidth = progressRect.width - 20;
 
         // Status text
-        GUIStyle statusStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 10,
-            alignment = TextAnchor.MiddleLeft,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.8f) }
-        };
+        cachedUtilStatusStyle.fontSize = 10;
+        cachedUtilStatusStyle.alignment = TextAnchor.MiddleLeft;
+        cachedUtilStatusStyle.normal.textColor = new Color(0.8f, 0.8f, 0.8f);
 
         string statusText = completedSteps >= totalSteps ?
             "Setup Complete! Your UI Framework is ready to use." :
@@ -145,21 +156,18 @@ public partial class UIManagerEditor : Editor
         EditorGUI.LabelField(
             new Rect(progressRect.x + 10, progressRect.y, innerWidth * 0.7f, progressRect.height),
             statusText,
-            statusStyle
+            cachedUtilStatusStyle
         );
 
         // Progress percentage
-        GUIStyle percentStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 10,
-            alignment = TextAnchor.MiddleRight,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.8f) }
-        };
+        cachedUtilPercentStyle.fontSize = 10;
+        cachedUtilPercentStyle.alignment = TextAnchor.MiddleRight;
+        cachedUtilPercentStyle.normal.textColor = new Color(0.8f, 0.8f, 0.8f);
 
         EditorGUI.LabelField(
             new Rect(progressRect.x + innerWidth * 0.7f, progressRect.y, innerWidth * 0.3f, progressRect.height),
             $"{(int)(progress * 100)}%",
-            percentStyle
+            cachedUtilPercentStyle
         );
 
         // Progress bar

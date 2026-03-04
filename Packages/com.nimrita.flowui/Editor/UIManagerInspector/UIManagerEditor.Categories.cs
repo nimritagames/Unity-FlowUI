@@ -29,11 +29,20 @@ public partial class UIManagerEditor : Editor
     // Cache for textures to avoid repeated allocations
     private static Dictionary<Color, Texture2D> colorTextureCache = new Dictionary<Color, Texture2D>();
 
+    // Cached GUIStyles for per-frame draw methods (avoid GC allocations)
+    private static GUIStyle cachedCatTitleStyle;
+    private static GUIStyle cachedCatHeaderBgStyle;
+    private static GUIStyle cachedCatHeaderNameStyle;
+    private static GUIStyle cachedCatItemRowStyle;
+    private static GUIStyle cachedCatItemLabelStyle;
+    private static GUIStyle cachedCatStatsTextStyle;
+
     private void DrawCategoriesPanel()
     {
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
         InitializeStyles();
+        InitializeCategoriesCachedStyles();
 
         // Title bar with tools
         DrawCategoriesTitleBar();
@@ -93,6 +102,44 @@ public partial class UIManagerEditor : Editor
         }
     }
 
+    private static void InitializeCategoriesCachedStyles()
+    {
+        if (cachedCatTitleStyle == null)
+        {
+            cachedCatTitleStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedCatTitleStyle.fontSize = 14;
+            cachedCatTitleStyle.alignment = TextAnchor.MiddleLeft;
+
+            cachedCatHeaderBgStyle = new GUIStyle();
+            cachedCatHeaderBgStyle.padding = new RectOffset(5, 5, 5, 5);
+            cachedCatHeaderBgStyle.stretchWidth = true;
+
+            cachedCatHeaderNameStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedCatHeaderNameStyle.fontSize = 12;
+            cachedCatHeaderNameStyle.alignment = TextAnchor.MiddleLeft;
+            cachedCatHeaderNameStyle.padding = new RectOffset(5, 5, 6, 6);
+            cachedCatHeaderNameStyle.margin = new RectOffset(0, 0, 0, 0);
+            cachedCatHeaderNameStyle.richText = true;
+            cachedCatHeaderNameStyle.fontStyle = FontStyle.Bold;
+            cachedCatHeaderNameStyle.wordWrap = false;
+
+            cachedCatItemRowStyle = new GUIStyle();
+            cachedCatItemRowStyle.padding = new RectOffset(5, 5, 3, 3);
+            cachedCatItemRowStyle.stretchWidth = true;
+
+            cachedCatItemLabelStyle = new GUIStyle(EditorStyles.label);
+            cachedCatItemLabelStyle.fontSize = 11;
+            cachedCatItemLabelStyle.padding = new RectOffset(5, 5, 3, 3);
+            cachedCatItemLabelStyle.margin = new RectOffset(0, 0, 0, 0);
+            cachedCatItemLabelStyle.richText = true;
+            cachedCatItemLabelStyle.wordWrap = false;
+
+            cachedCatStatsTextStyle = new GUIStyle(EditorStyles.miniLabel);
+            cachedCatStatsTextStyle.fontSize = 10;
+            cachedCatStatsTextStyle.wordWrap = false;
+        }
+    }
+
     private Texture2D MakeColorTexture(Color color)
     {
         // Use cached texture if available
@@ -136,12 +183,7 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.BeginHorizontal();
 
         // Title with icon
-        GUIStyle titleStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 14,
-            alignment = TextAnchor.MiddleLeft,
-            normal = { textColor = new Color(0.9f, 0.9f, 0.95f) }
-        };
+        cachedCatTitleStyle.normal.textColor = new Color(0.9f, 0.9f, 0.95f);
 
         Texture2D folderIcon = EditorGUIUtility.IconContent("Folder Icon").image as Texture2D;
         if (folderIcon != null)
@@ -150,7 +192,7 @@ public partial class UIManagerEditor : Editor
             GUILayout.Space(5);
         }
 
-        GUILayout.Label("UI Categories", titleStyle);
+        GUILayout.Label("UI Categories", cachedCatTitleStyle);
 
         // Flexible space to push button to the right
         GUILayout.FlexibleSpace();
@@ -401,16 +443,13 @@ public partial class UIManagerEditor : Editor
             categoryColor = color;
         }
 
-        // Create header background style with width constraint
-        GUIStyle headerStyle = new GUIStyle();
+        // Set header background style with width constraint
         Color bgColor = isExpanded ?
             new Color(categoryColor.r * 0.3f, categoryColor.g * 0.3f, categoryColor.b * 0.3f, 0.6f) :
             new Color(categoryColor.r * 0.2f, categoryColor.g * 0.2f, categoryColor.b * 0.2f, 0.4f);
-        headerStyle.normal.background = MakeColorTexture(bgColor);
-        headerStyle.padding = new RectOffset(5, 5, 5, 5);
-        headerStyle.stretchWidth = true;
+        cachedCatHeaderBgStyle.normal.background = MakeColorTexture(bgColor);
 
-        EditorGUILayout.BeginVertical(headerStyle);
+        EditorGUILayout.BeginVertical(cachedCatHeaderBgStyle);
         EditorGUILayout.BeginHorizontal();
 
         // Foldout arrow with constrained width
@@ -434,13 +473,7 @@ public partial class UIManagerEditor : Editor
         string itemCount = category.references != null ? $"({category.references.Count})" : "(0)";
         string categoryDisplayText = $"{category.name} {itemCount}";
 
-        GUIStyle nameStyle = new GUIStyle(categoryHeaderStyle)
-        {
-            fontStyle = FontStyle.Bold,
-            wordWrap = false // Prevent word wrapping that could cause layout issues
-        };
-
-        if (GUILayout.Button(categoryDisplayText, nameStyle, GUILayout.ExpandWidth(true)))
+        if (GUILayout.Button(categoryDisplayText, cachedCatHeaderNameStyle, GUILayout.ExpandWidth(true)))
         {
             SetCategoryExpanded(category.name, !isExpanded);
             Event.current.Use();
@@ -508,7 +541,6 @@ public partial class UIManagerEditor : Editor
             }
 
             // Create item row with alternating background
-            GUIStyle itemStyle = new GUIStyle();
             Color rowColor = (i % 2 == 0) ?
                 new Color(0.22f, 0.22f, 0.22f, 0.3f) :
                 new Color(0.25f, 0.25f, 0.25f, 0.2f);
@@ -527,11 +559,9 @@ public partial class UIManagerEditor : Editor
                 rowColor = new Color(rowColor.r, rowColor.g, rowColor.b, 0.15f);
             }
 
-            itemStyle.normal.background = MakeColorTexture(rowColor);
-            itemStyle.padding = new RectOffset(5, 5, 3, 3);
-            itemStyle.stretchWidth = true;
+            cachedCatItemRowStyle.normal.background = MakeColorTexture(rowColor);
 
-            EditorGUILayout.BeginHorizontal(itemStyle);
+            EditorGUILayout.BeginHorizontal(cachedCatItemRowStyle);
 
             // Checkbox for selection with constrained width
             bool wasSelected = selectedUIElements.Contains(reference.uiElement);
@@ -561,15 +591,10 @@ public partial class UIManagerEditor : Editor
                 displayName = $"{displayName} (inactive)";
             }
 
-            GUIStyle labelStyle = new GUIStyle(categoryItemStyle);
-            if (isInactive)
-            {
-                labelStyle.normal.textColor = Color.gray;
-            }
-            labelStyle.wordWrap = false; // Prevent text wrapping
+            cachedCatItemLabelStyle.normal.textColor = isInactive ? Color.gray : Color.white;
 
             // Clickable item name with text truncation
-            if (GUILayout.Button(displayName, labelStyle, GUILayout.ExpandWidth(true)))
+            if (GUILayout.Button(displayName, cachedCatItemLabelStyle, GUILayout.ExpandWidth(true)))
             {
                 // Handle item selection with modifiers
                 Event evt = Event.current;
@@ -720,12 +745,7 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.BeginHorizontal(statusBarStyle);
 
         // Element counts with constrained text
-        GUIStyle statsTextStyle = new GUIStyle(EditorStyles.miniLabel)
-        {
-            fontSize = 10,
-            normal = { textColor = new Color(0.7f, 0.7f, 0.75f) },
-            wordWrap = false
-        };
+        cachedCatStatsTextStyle.normal.textColor = new Color(0.7f, 0.7f, 0.75f);
 
         string statsText = $"Total: {totalElements}";
         if (selectedElements > 0)
@@ -733,7 +753,7 @@ public partial class UIManagerEditor : Editor
             statsText += $" | Selected: {selectedElements}";
         }
 
-        GUILayout.Label(statsText, statsTextStyle);
+        GUILayout.Label(statsText, cachedCatStatsTextStyle);
 
         // Flexible space to push button to the right
         GUILayout.FlexibleSpace();

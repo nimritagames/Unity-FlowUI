@@ -11,9 +11,104 @@ public partial class UIManagerEditor : Editor
 {
     #region Handler Generation
 
+    // Cached GUIStyles for handler draw methods
+    private static GUIStyle cachedHandlerStatusStyle;
+    private static GUIStyle cachedHandlerDateStyle;
+    private static GUIStyle cachedHandlerWarningStyle;
+    private static GUIStyle cachedHandlerLabelStyle;
+    private static GUIStyle cachedHandlerPathStyle;
+    private static GUIStyle cachedHandlerBrowseStyle;
+    private static GUIStyle cachedHandlerPreviewPathStyle;
+    private static GUIStyle cachedHandlerDetectedStyle;
+    private static GUIStyle cachedHandlerCodeStyle;
+    private static GUIStyle cachedHandlerNoteStyle;
+    private static GUIStyle cachedHandlerCheckStyle;
+    private static GUIStyle cachedHandlerTitleStyle;
+    private static GUIStyle cachedHandlerDescStyle;
+
+    private static void InitializeHandlersCachedStyles()
+    {
+        if (cachedHandlerStatusStyle == null)
+        {
+            cachedHandlerStatusStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 12
+            };
+            cachedHandlerDateStyle = new GUIStyle(EditorStyles.miniLabel)
+            {
+                fontSize = 9,
+                normal = { textColor = new Color(0.6f, 0.6f, 0.6f) }
+            };
+            cachedHandlerWarningStyle = new GUIStyle(EditorStyles.label)
+            {
+                fontSize = 10,
+                wordWrap = true,
+                normal = { textColor = new Color(0.9f, 0.6f, 0.2f) }
+            };
+            cachedHandlerLabelStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 11,
+                normal = { textColor = new Color(0.8f, 0.8f, 0.85f) }
+            };
+            cachedHandlerPathStyle = new GUIStyle(EditorStyles.textField)
+            {
+                fontSize = 11,
+                normal = { textColor = new Color(0.9f, 0.9f, 0.95f) }
+            };
+            cachedHandlerBrowseStyle = new GUIStyle(EditorStyles.miniButton)
+            {
+                fixedHeight = 18,
+                fontSize = 10
+            };
+            cachedHandlerPreviewPathStyle = new GUIStyle(EditorStyles.textField)
+            {
+                fontSize = 10,
+                normal = { textColor = new Color(0.7f, 0.7f, 0.75f) }
+            };
+            cachedHandlerDetectedStyle = new GUIStyle(EditorStyles.miniLabel)
+            {
+                fontSize = 9,
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = new Color(0.7f, 0.7f, 0.75f) }
+            };
+            cachedHandlerCodeStyle = new GUIStyle(EditorStyles.textArea)
+            {
+                fontSize = 11,
+                wordWrap = true,
+                richText = true,
+                normal = { textColor = new Color(0.8f, 0.8f, 0.8f) }
+            };
+            cachedHandlerNoteStyle = new GUIStyle(EditorStyles.miniLabel)
+            {
+                fontSize = 9,
+                wordWrap = true,
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = new Color(0.7f, 0.7f, 0.7f) }
+            };
+            cachedHandlerCheckStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 14,
+                normal = { textColor = new Color(0.4f, 0.8f, 0.4f) }
+            };
+            cachedHandlerTitleStyle = new GUIStyle(EditorStyles.label)
+            {
+                fontSize = 12,
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = new Color(0.8f, 0.8f, 0.9f) }
+            };
+            cachedHandlerDescStyle = new GUIStyle(EditorStyles.label)
+            {
+                fontSize = 10,
+                normal = { textColor = new Color(0.7f, 0.7f, 0.75f) }
+            };
+        }
+    }
+
     private void DrawHandlerSettings()
     {
-        // Get scene name 
+        InitializeHandlersCachedStyles();
+
+        // Get scene name
         string sceneName = uiManager.gameObject.scene.name;
         string sanitizedSceneName = SanitizeIdentifier(sceneName);
 
@@ -60,11 +155,7 @@ public partial class UIManagerEditor : Editor
         }
 
         // Status text
-        GUIStyle statusStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 12,
-            normal = { textColor = handlerExists ? new Color(0.3f, 0.7f, 0.3f) : new Color(0.7f, 0.7f, 0.8f) }
-        };
+        cachedHandlerStatusStyle.normal.textColor = handlerExists ? new Color(0.3f, 0.7f, 0.3f) : new Color(0.7f, 0.7f, 0.8f);
 
         string statusText = handlerExists ?
             "Handler Status: ? Generated" :
@@ -73,18 +164,12 @@ public partial class UIManagerEditor : Editor
         EditorGUI.LabelField(
             new Rect(statusRect.x + 40, statusRect.y + 9, statusRect.width - 50, 18),
             statusText,
-            statusStyle
+            cachedHandlerStatusStyle
         );
 
         // Last updated date if available
         if (handlerExists)
         {
-            GUIStyle dateStyle = new GUIStyle(EditorStyles.miniLabel)
-            {
-                fontSize = 9,
-                normal = { textColor = new Color(0.6f, 0.6f, 0.6f) }
-            };
-
             // Get file date info (check both generated and user files)
             string generatedFilePath = Path.Combine(handlerOutputPath, $"{handlerClassPrefix}{sanitizedSceneName}UIHandler.g.cs");
             string userFilePath = Path.Combine(handlerOutputPath, $"{handlerClassPrefix}{sanitizedSceneName}UIHandler.cs");
@@ -95,26 +180,19 @@ public partial class UIManagerEditor : Editor
             EditorGUI.LabelField(
                 new Rect(statusRect.x + 200, statusRect.y + 12, statusRect.width - 210, 14),
                 dateText,
-                dateStyle
+                cachedHandlerDateStyle
             );
         }
 
         // Library dependency warning if needed
         if (!libraryExists)
         {
-            GUIStyle warningStyle = new GUIStyle(EditorStyles.label)
-            {
-                fontSize = 10,
-                wordWrap = true,
-                normal = { textColor = new Color(0.9f, 0.6f, 0.2f) }
-            };
-
             EditorGUILayout.Space(2);
             EditorGUILayout.BeginHorizontal();
             GUILayout.Space(12);
             EditorGUILayout.LabelField(
                 "?? Library must be generated first. Please go to the Library Generation tab.",
-                warningStyle
+                cachedHandlerWarningStyle
             );
             EditorGUILayout.EndHorizontal();
         }
@@ -189,39 +267,21 @@ public partial class UIManagerEditor : Editor
 
         // Output path with browse button
         EditorGUILayout.BeginHorizontal();
-        GUIStyle labelStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 11,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.85f) }
-        };
 
         EditorGUILayout.LabelField(
             new GUIContent("Output Path", "The folder where the generated handler files will be stored"),
-            labelStyle,
+            cachedHandlerLabelStyle,
             GUILayout.Width(100)
         );
 
-        // Custom field style
-        GUIStyle pathStyle = new GUIStyle(EditorStyles.textField)
-        {
-            fontSize = 11,
-            normal = { textColor = new Color(0.9f, 0.9f, 0.95f) }
-        };
-
-        string newPath = EditorGUILayout.TextField(handlerOutputPath, pathStyle);
+        string newPath = EditorGUILayout.TextField(handlerOutputPath, cachedHandlerPathStyle);
         if (newPath != handlerOutputPath)
         {
             handlerOutputPath = newPath;
             EditorPrefs.SetString(HANDLER_OUTPUT_PATH_KEY, handlerOutputPath);
         }
 
-        GUIStyle browseStyle = new GUIStyle(EditorStyles.miniButton)
-        {
-            fixedHeight = 18,
-            fontSize = 10
-        };
-
-        if (GUILayout.Button("Browse...", browseStyle, GUILayout.Width(70)))
+        if (GUILayout.Button("Browse...", cachedHandlerBrowseStyle, GUILayout.Width(70)))
         {
             string selectedPath = EditorUtility.OpenFolderPanel("Select Handler Output Path", "Assets", "");
             if (!string.IsNullOrEmpty(selectedPath))
@@ -246,11 +306,11 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField(
             new GUIContent("Namespace", "The namespace for the generated UI Handler"),
-            labelStyle,
+            cachedHandlerLabelStyle,
             GUILayout.Width(100)
         );
 
-        string newNamespace = EditorGUILayout.TextField(handlerNamespace, pathStyle);
+        string newNamespace = EditorGUILayout.TextField(handlerNamespace, cachedHandlerPathStyle);
         if (newNamespace != handlerNamespace)
         {
             handlerNamespace = newNamespace;
@@ -264,11 +324,11 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField(
             new GUIContent("Class Prefix", "A prefix to use for the generated handler classes (optional)"),
-            labelStyle,
+            cachedHandlerLabelStyle,
             GUILayout.Width(100)
         );
 
-        string newPrefix = EditorGUILayout.TextField(handlerClassPrefix, pathStyle);
+        string newPrefix = EditorGUILayout.TextField(handlerClassPrefix, cachedHandlerPathStyle);
         if (newPrefix != handlerClassPrefix)
         {
             handlerClassPrefix = newPrefix;
@@ -279,24 +339,19 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.Space(10);
 
         // Preview section
-        EditorGUILayout.LabelField("Generated File Preview:", labelStyle);
+        EditorGUILayout.LabelField("Generated File Preview:", cachedHandlerLabelStyle);
         EditorGUILayout.Space(2);
 
         // File path preview
-        GUIStyle previewPathStyle = new GUIStyle(EditorStyles.textField)
-        {
-            fontSize = 10,
-            normal = { textColor = new Color(0.7f, 0.7f, 0.75f) }
-        };
 
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Generated:", GUILayout.Width(70));
-        GUILayout.TextField($"{handlerOutputPath}/{handlerClassPrefix}{sanitizedSceneName}UIHandler.g.cs", previewPathStyle, GUILayout.Height(20));
+        GUILayout.TextField($"{handlerOutputPath}/{handlerClassPrefix}{sanitizedSceneName}UIHandler.g.cs", cachedHandlerPreviewPathStyle, GUILayout.Height(20));
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("User Code:", GUILayout.Width(70));
-        GUILayout.TextField($"{handlerOutputPath}/{handlerClassPrefix}{sanitizedSceneName}UIHandler.cs", previewPathStyle, GUILayout.Height(20));
+        GUILayout.TextField($"{handlerOutputPath}/{handlerClassPrefix}{sanitizedSceneName}UIHandler.cs", cachedHandlerPreviewPathStyle, GUILayout.Height(20));
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.EndVertical();
@@ -310,27 +365,14 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
         // Draw feature boxes with icons
-        GUIStyle featureStyle = new GUIStyle(EditorStyles.label)
-        {
-            fontSize = 11,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.9f) }
-        };
-
-        DrawFeatureItem("Component Referencing", "Automatically get references to UI components via UIManager", featureStyle);
-        DrawFeatureItem("Event Handling", "Event handlers for Buttons, Toggles, Sliders, Input Fields, etc.", featureStyle);
-        DrawFeatureItem("Panel Management", "Methods to show/hide UI panels with optional animations", featureStyle);
-        DrawFeatureItem("Lifecycle Hooks", "Properly initializes and cleans up UI elements and listeners", featureStyle);
+        DrawFeatureItem("Component Referencing", "Automatically get references to UI components via UIManager");
+        DrawFeatureItem("Event Handling", "Event handlers for Buttons, Toggles, Sliders, Input Fields, etc.");
+        DrawFeatureItem("Panel Management", "Methods to show/hide UI panels with optional animations");
+        DrawFeatureItem("Lifecycle Hooks", "Properly initializes and cleans up UI elements and listeners");
 
         EditorGUILayout.Space(5);
 
         // Element detection section
-        GUIStyle detectedStyle = new GUIStyle(EditorStyles.miniLabel)
-        {
-            fontSize = 9,
-            alignment = TextAnchor.MiddleLeft,
-            normal = { textColor = new Color(0.7f, 0.7f, 0.75f) }
-        };
-
         // Count detected UI elements by type
         int buttonCount = CountUIElementsByType("Button", uiManager);
         int toggleCount = CountUIElementsByType("Toggle", uiManager);
@@ -341,9 +383,9 @@ public partial class UIManagerEditor : Editor
 
         // Detect UI elements
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Detected UI Elements:", detectedStyle, GUILayout.Width(120));
+        EditorGUILayout.LabelField("Detected UI Elements:", cachedHandlerDetectedStyle, GUILayout.Width(120));
         string elementsText = $"Buttons: {buttonCount} | Toggles: {toggleCount} | Sliders: {sliderCount} | Panels: {panelCount} | Inputs: {inputCount} | Texts: {textCount}";
-        EditorGUILayout.LabelField(elementsText, detectedStyle);
+        EditorGUILayout.LabelField(elementsText, cachedHandlerDetectedStyle);
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.EndVertical();
@@ -355,14 +397,6 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.Space(5);
 
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-
-        GUIStyle codeStyle = new GUIStyle(EditorStyles.textArea)
-        {
-            fontSize = 11,
-            wordWrap = true,
-            richText = true,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.8f) }
-        };
 
         string example =
             "<color=#569CD6>// Add this component to your scene and assign UIManager</color>\n" +
@@ -377,62 +411,36 @@ public partial class UIManagerEditor : Editor
             "}\n";
 
         // Disable editing in the Inspector
-        EditorGUILayout.SelectableLabel(example, codeStyle, GUILayout.Height(150));
+        EditorGUILayout.SelectableLabel(example, cachedHandlerCodeStyle, GUILayout.Height(150));
 
         EditorGUILayout.Space(5);
-
-        GUIStyle noteStyle = new GUIStyle(EditorStyles.miniLabel)
-        {
-            fontSize = 9,
-            wordWrap = true,
-            alignment = TextAnchor.MiddleLeft,
-            normal = { textColor = new Color(0.7f, 0.7f, 0.7f) }
-        };
 
         EditorGUILayout.LabelField(
             "Note: The handler provides a clean MonoBehaviour interface to your UI elements, separating UI logic from game logic " +
             "and reducing boilerplate code for setting up event listeners.",
-            noteStyle
+            cachedHandlerNoteStyle
         );
 
         EditorGUILayout.EndVertical();
     }
 
-    private void DrawFeatureItem(string title, string description, GUIStyle style)
+    private void DrawFeatureItem(string title, string description)
     {
         EditorGUILayout.BeginHorizontal();
 
         // Checkmark
-        GUIStyle checkStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 14,
-            normal = { textColor = new Color(0.4f, 0.8f, 0.4f) }
-        };
-
-        EditorGUILayout.LabelField("?", checkStyle, GUILayout.Width(20));
+        EditorGUILayout.LabelField("?", cachedHandlerCheckStyle, GUILayout.Width(20));
 
         // Title and description
         EditorGUILayout.BeginVertical();
 
         // Title in bold
-        GUIStyle titleStyle = new GUIStyle(style)
-        {
-            fontStyle = FontStyle.Bold,
-            fontSize = 12
-        };
-
-        EditorGUILayout.LabelField(title, titleStyle);
+        EditorGUILayout.LabelField(title, cachedHandlerTitleStyle);
 
         // Description in normal text, slightly indented
-        GUIStyle descStyle = new GUIStyle(style)
-        {
-            fontSize = 10,
-            normal = { textColor = new Color(0.7f, 0.7f, 0.75f) }
-        };
-
         EditorGUILayout.BeginHorizontal();
         GUILayout.Space(10);
-        EditorGUILayout.LabelField(description, descStyle);
+        EditorGUILayout.LabelField(description, cachedHandlerDescStyle);
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.EndVertical();

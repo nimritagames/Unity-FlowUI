@@ -9,6 +9,21 @@ public partial class UIManagerEditor : Editor
 {
     #region Search and Filtering
 
+    // Cached GUIStyles for Search
+    private static GUIStyle cachedSearchFieldStyle;
+    private static GUIStyle cachedSearchClearBtnStyle;
+    private static GUIStyle cachedSearchResultStyle;
+
+    private static void InitializeSearchCachedStyles()
+    {
+        if (cachedSearchFieldStyle == null)
+        {
+            cachedSearchFieldStyle = new GUIStyle(EditorStyles.toolbarSearchField);
+            cachedSearchClearBtnStyle = new GUIStyle(EditorStyles.miniButton);
+            cachedSearchResultStyle = new GUIStyle(EditorStyles.miniLabel);
+        }
+    }
+
     // Search state variables
     private string searchQuery = string.Empty;
     private string previousSearchQuery = string.Empty;
@@ -56,11 +71,11 @@ public partial class UIManagerEditor : Editor
         }
 
         // Search field with improved styling
-        GUIStyle searchFieldStyle = new GUIStyle(EditorStyles.toolbarSearchField);
-        searchFieldStyle.fixedHeight = 22;
+        InitializeSearchCachedStyles();
+        cachedSearchFieldStyle.fixedHeight = 22;
 
         EditorGUI.BeginChangeCheck();
-        string newSearchQuery = EditorGUILayout.TextField(searchQuery, searchFieldStyle, GUILayout.ExpandWidth(true));
+        string newSearchQuery = EditorGUILayout.TextField(searchQuery, cachedSearchFieldStyle, GUILayout.ExpandWidth(true));
         if (EditorGUI.EndChangeCheck())
         {
             // Debounce search input
@@ -71,9 +86,8 @@ public partial class UIManagerEditor : Editor
         }
 
         // Clear button with better styling
-        GUIStyle clearButtonStyle = new GUIStyle(EditorStyles.miniButton);
-        clearButtonStyle.fixedHeight = 22;
-        if (GUILayout.Button(new GUIContent("Clear", "Clear search"), clearButtonStyle, GUILayout.Width(50)))
+        cachedSearchClearBtnStyle.fixedHeight = 22;
+        if (GUILayout.Button(new GUIContent("Clear", "Clear search"), cachedSearchClearBtnStyle, GUILayout.Width(50)))
         {
             if (!string.IsNullOrEmpty(searchQuery))
             {
@@ -95,14 +109,13 @@ public partial class UIManagerEditor : Editor
             EditorGUILayout.BeginHorizontal();
             GUILayout.Space(22); // Match indentation with search field
 
-            GUIStyle resultStyle = new GUIStyle(EditorStyles.miniLabel);
-            resultStyle.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
+            cachedSearchResultStyle.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
 
             string resultsText = resultCount == 1
                 ? "1 result found"
                 : $"{resultCount} results found";
 
-            EditorGUILayout.LabelField(resultsText, resultStyle);
+            EditorGUILayout.LabelField(resultsText, cachedSearchResultStyle);
 
             EditorGUILayout.EndHorizontal();
         }

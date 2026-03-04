@@ -40,6 +40,8 @@ public partial class UIManagerEditor : Editor
     private static GUIStyle cachedSummaryStyle;
     private static GUIStyle cachedNameStyle;
     private static GUIStyle cachedHierarchyButtonStyle;
+    private static GUIStyle cachedHierarchyRowNameStyle;
+    private static GUIStyle cachedHierarchyRowBtnStyle;
 
     // Enhanced responsive breakpoints
     private float GetCurrentEditorWidth()
@@ -137,6 +139,8 @@ public partial class UIManagerEditor : Editor
             cachedSummaryStyle = new GUIStyle(EditorStyles.miniLabel);
             cachedNameStyle = new GUIStyle(EditorStyles.label);
             cachedHierarchyButtonStyle = new GUIStyle(EditorStyles.miniButton);
+            cachedHierarchyRowNameStyle = new GUIStyle(EditorStyles.label);
+            cachedHierarchyRowBtnStyle = new GUIStyle(EditorStyles.miniButton);
         }
     }
 
@@ -1255,15 +1259,12 @@ public partial class UIManagerEditor : Editor
         int nameFontSize = GetAdaptiveFontSize(12);
         float namePadding = GetAdaptivePadding(4f);
 
-        GUIStyle nameStyle = new GUIStyle(EditorStyles.label)
-        {
-            padding = new RectOffset((int)namePadding, (int)namePadding, (int)(namePadding * 2), (int)(namePadding * 2)),
-            margin = new RectOffset(2, 2, 0, 0),
-            alignment = TextAnchor.MiddleLeft,
-            fontSize = nameFontSize,
-            clipping = TextClipping.Clip,
-            wordWrap = false
-        };
+        cachedHierarchyRowNameStyle.padding = new RectOffset((int)namePadding, (int)namePadding, (int)(namePadding * 2), (int)(namePadding * 2));
+        cachedHierarchyRowNameStyle.margin = new RectOffset(2, 2, 0, 0);
+        cachedHierarchyRowNameStyle.alignment = TextAnchor.MiddleLeft;
+        cachedHierarchyRowNameStyle.fontSize = nameFontSize;
+        cachedHierarchyRowNameStyle.clipping = TextClipping.Clip;
+        cachedHierarchyRowNameStyle.wordWrap = false;
 
         // Enhanced status-based styling
         GameObject gameObject = transform.gameObject;
@@ -1272,25 +1273,25 @@ public partial class UIManagerEditor : Editor
 
         if (isAdded)
         {
-            nameStyle.normal.textColor = isInactive ?
+            cachedHierarchyRowNameStyle.normal.textColor = isInactive ?
                 new Color(0.3f, 0.8f, 0.3f, 0.7f) :
                 new Color(0.4f, 1.0f, 0.4f);
-            nameStyle.fontStyle = FontStyle.Bold;
+            cachedHierarchyRowNameStyle.fontStyle = FontStyle.Bold;
         }
         else if (hasSupportedComponent)
         {
-            nameStyle.normal.textColor = isInactive ?
+            cachedHierarchyRowNameStyle.normal.textColor = isInactive ?
                 new Color(0.3f, 0.6f, 0.9f, 0.7f) :
                 new Color(0.4f, 0.8f, 1.0f);
         }
         else if (isInactive)
         {
-            nameStyle.normal.textColor = new Color(0.6f, 0.6f, 0.6f, 0.6f);
-            nameStyle.fontStyle = FontStyle.Italic;
+            cachedHierarchyRowNameStyle.normal.textColor = new Color(0.6f, 0.6f, 0.6f, 0.6f);
+            cachedHierarchyRowNameStyle.fontStyle = FontStyle.Italic;
         }
         else
         {
-            nameStyle.normal.textColor = EditorGUIUtility.isProSkin ?
+            cachedHierarchyRowNameStyle.normal.textColor = EditorGUIUtility.isProSkin ?
                 new Color(0.9f, 0.9f, 0.9f) :
                 new Color(0.1f, 0.1f, 0.1f);
         }
@@ -1309,7 +1310,7 @@ public partial class UIManagerEditor : Editor
         // Enhanced search highlighting
         if (isMatchingSearch && !string.IsNullOrEmpty(searchQuery))
         {
-            DrawHighlightedText(displayName, searchQuery, nameStyle, rowHeight, mode);
+            DrawHighlightedText(displayName, searchQuery, cachedHierarchyRowNameStyle, rowHeight, mode);
         }
         else
         {
@@ -1321,7 +1322,7 @@ public partial class UIManagerEditor : Editor
                 _ => 120f
             };
 
-            EditorGUILayout.LabelField(displayName, nameStyle,
+            EditorGUILayout.LabelField(displayName, cachedHierarchyRowNameStyle,
                 GUILayout.MinWidth(minWidth),
                 GUILayout.ExpandWidth(true),
                 GUILayout.Height(rowHeight));
@@ -1390,15 +1391,12 @@ public partial class UIManagerEditor : Editor
         float buttonPadding = GetAdaptivePadding(6f);
         float buttonSpacing = GetAdaptiveSpacing(8f);
 
-        GUIStyle buttonStyle = new GUIStyle(EditorStyles.miniButton)
-        {
-            fixedHeight = buttonHeight,
-            margin = new RectOffset(2, 2, (int)((rowHeight - buttonHeight) / 2), (int)((rowHeight - buttonHeight) / 2)),
-            padding = new RectOffset((int)buttonPadding, (int)buttonPadding, 3, 3),
-            alignment = TextAnchor.MiddleCenter,
-            fontSize = buttonFontSize,
-            clipping = TextClipping.Clip
-        };
+        cachedHierarchyRowBtnStyle.fixedHeight = buttonHeight;
+        cachedHierarchyRowBtnStyle.margin = new RectOffset(2, 2, (int)((rowHeight - buttonHeight) / 2), (int)((rowHeight - buttonHeight) / 2));
+        cachedHierarchyRowBtnStyle.padding = new RectOffset((int)buttonPadding, (int)buttonPadding, 3, 3);
+        cachedHierarchyRowBtnStyle.alignment = TextAnchor.MiddleCenter;
+        cachedHierarchyRowBtnStyle.fontSize = buttonFontSize;
+        cachedHierarchyRowBtnStyle.clipping = TextClipping.Clip;
 
         // Responsive button widths and text
         (float addWidth, string addText, float selectWidth, string selectText) = mode switch
@@ -1425,7 +1423,7 @@ public partial class UIManagerEditor : Editor
                 "This UI element is already managed by the UI Manager";
 
             GUIContent addedContent = new GUIContent(addText, tooltip);
-            GUILayout.Button(addedContent, buttonStyle, GUILayout.Width(addWidth));
+            GUILayout.Button(addedContent, cachedHierarchyRowBtnStyle, GUILayout.Width(addWidth));
 
             GUI.backgroundColor = defaultColor;
             GUI.enabled = true;
@@ -1466,7 +1464,7 @@ public partial class UIManagerEditor : Editor
                 }
             }
 
-            if (GUI.Button(buttonRect, addContent, buttonStyle))
+            if (GUI.Button(buttonRect, addContent, cachedHierarchyRowBtnStyle))
             {
                 HandleAddUIElement(gameObject, wouldRename, standardizedName, transform.name);
             }
@@ -1488,7 +1486,7 @@ public partial class UIManagerEditor : Editor
 
         GUIContent selectContent = new GUIContent(selectText, selectTooltip);
 
-        if (GUILayout.Button(selectContent, buttonStyle, GUILayout.Width(selectWidth)))
+        if (GUILayout.Button(selectContent, cachedHierarchyRowBtnStyle, GUILayout.Width(selectWidth)))
         {
             Selection.activeGameObject = gameObject;
             EditorGUIUtility.PingObject(gameObject);

@@ -11,6 +11,98 @@ public partial class UIManagerEditor : Editor
 {
     #region Panel Handler Settings
 
+    // Cached GUIStyles for panel handlers (avoid per-frame allocations)
+    private static GUIStyle cachedPanelWarningStyle;
+    private static GUIStyle cachedPanelCountStyle;
+    private static GUIStyle cachedPanelInfoStyle;
+    private static GUIStyle cachedPanelLabelStyle;
+    private static GUIStyle cachedPanelPathStyle;
+    private static GUIStyle cachedPanelBrowseStyle;
+    private static GUIStyle cachedPanelBinderInfoStyle;
+    private static GUIStyle cachedPanelCodeHeaderStyle;
+    private static GUIStyle cachedPanelCodeStyle;
+    private static GUIStyle cachedPanelNameStyle;
+    private static GUIStyle cachedPanelStatusStyle;
+
+    private static void InitializePanelHandlersCachedStyles()
+    {
+        if (cachedPanelWarningStyle != null) return;
+
+        cachedPanelWarningStyle = new GUIStyle(EditorStyles.label)
+        {
+            fontSize = 11,
+            wordWrap = true,
+            normal = { textColor = new Color(0.9f, 0.6f, 0.1f) },
+            padding = new RectOffset(10, 10, 6, 6)
+        };
+
+        cachedPanelCountStyle = new GUIStyle(EditorStyles.boldLabel)
+        {
+            fontSize = 12
+        };
+
+        cachedPanelInfoStyle = new GUIStyle(EditorStyles.label)
+        {
+            fontSize = 11,
+            wordWrap = true,
+            normal = { textColor = new Color(0.7f, 0.85f, 1f) },
+            padding = new RectOffset(20, 20, 10, 10)
+        };
+
+        cachedPanelLabelStyle = new GUIStyle(EditorStyles.boldLabel)
+        {
+            fontSize = 11,
+            normal = { textColor = new Color(0.8f, 0.8f, 0.85f) }
+        };
+
+        cachedPanelPathStyle = new GUIStyle(EditorStyles.textField)
+        {
+            fontSize = 11,
+            normal = { textColor = new Color(0.9f, 0.9f, 0.95f) }
+        };
+
+        cachedPanelBrowseStyle = new GUIStyle(EditorStyles.miniButton)
+        {
+            fixedHeight = 18,
+            fontSize = 10
+        };
+
+        cachedPanelBinderInfoStyle = new GUIStyle(EditorStyles.label)
+        {
+            fontSize = 11,
+            wordWrap = true,
+            richText = true,
+            normal = { textColor = new Color(0.8f, 0.8f, 0.85f) },
+            padding = new RectOffset(10, 10, 10, 10)
+        };
+
+        cachedPanelCodeHeaderStyle = new GUIStyle(EditorStyles.miniBoldLabel)
+        {
+            fontSize = 11,
+            normal = { textColor = new Color(0.7f, 0.85f, 1f) },
+            margin = new RectOffset(10, 0, 0, 0)
+        };
+
+        cachedPanelCodeStyle = new GUIStyle(EditorStyles.textArea)
+        {
+            fontSize = 11,
+            wordWrap = true,
+            richText = true,
+            normal = { textColor = new Color(0.8f, 0.8f, 0.8f) }
+        };
+
+        cachedPanelNameStyle = new GUIStyle(EditorStyles.boldLabel)
+        {
+            fontSize = 12,
+            normal = { textColor = new Color(0.9f, 0.9f, 0.95f) }
+        };
+
+        cachedPanelStatusStyle = new GUIStyle(EditorStyles.miniLabel)
+        {
+            alignment = TextAnchor.MiddleRight
+        };
+    }
+
     // Initialize panel handler settings
     private void InitializePanelHandlerSettings()
     {
@@ -33,6 +125,8 @@ public partial class UIManagerEditor : Editor
 
     private void DrawPanelHandlerSettings()
     {
+        InitializePanelHandlersCachedStyles();
+
         DrawSectionHeader("Panel Handlers",
             "Generate handlers for individual UI panels.\nEach panel handler manages a specific panel's UI elements and interactions.");
 
@@ -52,14 +146,6 @@ public partial class UIManagerEditor : Editor
                 EditorGUI.DrawRect(warningRect, warningColor);
             }
 
-            GUIStyle warningStyle = new GUIStyle(EditorStyles.label)
-            {
-                fontSize = 11,
-                wordWrap = true,
-                normal = { textColor = new Color(0.9f, 0.6f, 0.1f) },
-                padding = new RectOffset(10, 10, 6, 6)
-            };
-
             Texture2D warningIcon = EditorGUIUtility.IconContent("console.warnicon.sml").image as Texture2D;
 
             if (warningIcon != null)
@@ -72,7 +158,7 @@ public partial class UIManagerEditor : Editor
                 EditorGUI.LabelField(
                     new Rect(warningRect.x + 30, warningRect.y, warningRect.width - 40, warningRect.height),
                     "Library must be generated first. Please go to the Library Generation tab.",
-                    warningStyle
+                    cachedPanelWarningStyle
                 );
             }
             else
@@ -80,7 +166,7 @@ public partial class UIManagerEditor : Editor
                 EditorGUI.LabelField(
                     warningRect,
                     "⚠️ Library must be generated first. Please go to the Library Generation tab.",
-                    warningStyle
+                    cachedPanelWarningStyle
                 );
             }
 
@@ -118,11 +204,7 @@ public partial class UIManagerEditor : Editor
         }
 
         // Panel count text
-        GUIStyle countStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 12,
-            normal = { textColor = panels.Any() ? new Color(0.3f, 0.7f, 0.3f) : new Color(0.7f, 0.7f, 0.8f) }
-        };
+        cachedPanelCountStyle.normal.textColor = panels.Any() ? new Color(0.3f, 0.7f, 0.3f) : new Color(0.7f, 0.7f, 0.8f);
 
         string countText = panels.Any() ?
             $"Found {panels.Count} UI panels in the scene" :
@@ -131,7 +213,7 @@ public partial class UIManagerEditor : Editor
         EditorGUI.LabelField(
             new Rect(countRect.x + 40, countRect.y + 9, countRect.width - 50, 18),
             countText,
-            countStyle
+            cachedPanelCountStyle
         );
 
         EditorGUILayout.EndVertical();
@@ -143,18 +225,10 @@ public partial class UIManagerEditor : Editor
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-            GUIStyle infoStyle = new GUIStyle(EditorStyles.label)
-            {
-                fontSize = 11,
-                wordWrap = true,
-                normal = { textColor = new Color(0.7f, 0.85f, 1f) },
-                padding = new RectOffset(20, 20, 10, 10)
-            };
-
             // Info text
             EditorGUILayout.LabelField(
                 "Add panels to the UI Manager first using the UI Hierarchy tab. Panels should have names ending with '_Panel'.",
-                infoStyle
+                cachedPanelInfoStyle
             );
 
             // Add button to navigate to hierarchy tab
@@ -231,39 +305,20 @@ public partial class UIManagerEditor : Editor
 
         // Output path with browse button
         EditorGUILayout.BeginHorizontal();
-        GUIStyle labelStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 11,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.85f) }
-        };
-
         EditorGUILayout.LabelField(
             new GUIContent("Output Path", "The folder where the generated panel handler files will be stored"),
-            labelStyle,
+            cachedPanelLabelStyle,
             GUILayout.Width(100)
         );
 
-        // Custom field style
-        GUIStyle pathStyle = new GUIStyle(EditorStyles.textField)
-        {
-            fontSize = 11,
-            normal = { textColor = new Color(0.9f, 0.9f, 0.95f) }
-        };
-
-        string newPath = EditorGUILayout.TextField(panelHandlerOutputPath, pathStyle);
+        string newPath = EditorGUILayout.TextField(panelHandlerOutputPath, cachedPanelPathStyle);
         if (newPath != panelHandlerOutputPath)
         {
             panelHandlerOutputPath = newPath;
             EditorPrefs.SetString(PANEL_HANDLER_OUTPUT_PATH_KEY, panelHandlerOutputPath);
         }
 
-        GUIStyle browseStyle = new GUIStyle(EditorStyles.miniButton)
-        {
-            fixedHeight = 18,
-            fontSize = 10
-        };
-
-        if (GUILayout.Button("Browse...", browseStyle, GUILayout.Width(70)))
+        if (GUILayout.Button("Browse...", cachedPanelBrowseStyle, GUILayout.Width(70)))
         {
             string selectedPath = EditorUtility.OpenFolderPanel("Select Panel Handler Output Path", "Assets", "");
             if (!string.IsNullOrEmpty(selectedPath))
@@ -288,11 +343,11 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField(
             new GUIContent("Namespace", "The namespace for the generated Panel Handlers"),
-            labelStyle,
+            cachedPanelLabelStyle,
             GUILayout.Width(100)
         );
 
-        string newNamespace = EditorGUILayout.TextField(panelHandlerNamespace, pathStyle);
+        string newNamespace = EditorGUILayout.TextField(panelHandlerNamespace, cachedPanelPathStyle);
         if (newNamespace != panelHandlerNamespace)
         {
             panelHandlerNamespace = newNamespace;
@@ -306,11 +361,11 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField(
             new GUIContent("Class Prefix", "A prefix to use for the generated panel handler classes (optional)"),
-            labelStyle,
+            cachedPanelLabelStyle,
             GUILayout.Width(100)
         );
 
-        string newPrefix = EditorGUILayout.TextField(panelHandlerClassPrefix, pathStyle);
+        string newPrefix = EditorGUILayout.TextField(panelHandlerClassPrefix, cachedPanelPathStyle);
         if (newPrefix != panelHandlerClassPrefix)
         {
             panelHandlerClassPrefix = newPrefix;
@@ -328,40 +383,15 @@ public partial class UIManagerEditor : Editor
 
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-        // Info box with styling
-        GUIStyle binderInfoStyle = new GUIStyle(EditorStyles.label)
-        {
-            fontSize = 11,
-            wordWrap = true,
-            richText = true,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.85f) },
-            padding = new RectOffset(10, 10, 10, 10)
-        };
-
         string binderInfoText = "<b>UIPanelBinder</b> automatically connects your panel handler to the correct panel and UI Manager. " +
             "Add this component to the same GameObject as your panel handler component for automatic setup.";
 
-        EditorGUILayout.LabelField(binderInfoText, binderInfoStyle);
+        EditorGUILayout.LabelField(binderInfoText, cachedPanelBinderInfoStyle);
 
         // Example code
         EditorGUILayout.Space(10);
 
-        GUIStyle codeHeaderStyle = new GUIStyle(EditorStyles.miniBoldLabel)
-        {
-            fontSize = 11,
-            normal = { textColor = new Color(0.7f, 0.85f, 1f) },
-            margin = new RectOffset(10, 0, 0, 0)
-        };
-
-        EditorGUILayout.LabelField("Quick Setup Guide:", codeHeaderStyle);
-
-        GUIStyle codeStyle = new GUIStyle(EditorStyles.textArea)
-        {
-            fontSize = 11,
-            wordWrap = true,
-            richText = true,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.8f) }
-        };
+        EditorGUILayout.LabelField("Quick Setup Guide:", cachedPanelCodeHeaderStyle);
 
         string exampleCode =
             "<color=#569CD6>// 1. Create an empty GameObject in your scene</color>\n" +
@@ -374,7 +404,7 @@ public partial class UIManagerEditor : Editor
             "<color=#6A9955>// - Set up all required connections</color>";
 
         // Disable editing in the Inspector
-        EditorGUILayout.SelectableLabel(exampleCode, codeStyle, GUILayout.Height(140));
+        EditorGUILayout.SelectableLabel(exampleCode, cachedPanelCodeStyle, GUILayout.Height(140));
 
         EditorGUILayout.EndVertical();
     }
@@ -417,32 +447,22 @@ public partial class UIManagerEditor : Editor
         }
 
         // Panel name
-        GUIStyle nameStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 12,
-            normal = { textColor = new Color(0.9f, 0.9f, 0.95f) }
-        };
-
         EditorGUI.LabelField(
             new Rect(headerRect.x + 30, headerRect.y + 8, 200, 20),
             panel.name,
-            nameStyle
+            cachedPanelNameStyle
         );
 
         // Status indicator
         string statusText = handlerExists ? "✓ Generated" : "Not Generated";
         Color statusColor = handlerExists ? new Color(0.4f, 0.8f, 0.4f) : new Color(0.7f, 0.7f, 0.7f);
 
-        GUIStyle statusStyle = new GUIStyle(EditorStyles.miniLabel)
-        {
-            alignment = TextAnchor.MiddleRight,
-            normal = { textColor = statusColor }
-        };
+        cachedPanelStatusStyle.normal.textColor = statusColor;
 
         EditorGUI.LabelField(
             new Rect(headerRect.x + headerRect.width - 270, headerRect.y + 8, 80, 16),
             statusText,
-            statusStyle
+            cachedPanelStatusStyle
         );
 
         // Generate button

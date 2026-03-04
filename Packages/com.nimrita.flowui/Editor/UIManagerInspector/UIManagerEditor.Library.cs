@@ -10,8 +10,83 @@ public partial class UIManagerEditor : Editor
 {
     #region Library Generation
 
+    // Cached GUIStyle fields for DrawLibrarySettings (avoid per-frame allocations)
+    private static GUIStyle cachedLibStatusStyle;
+    private static GUIStyle cachedLibDateStyle;
+    private static GUIStyle cachedLibLabelStyle;
+    private static GUIStyle cachedLibPathStyle;
+    private static GUIStyle cachedLibBrowseStyle;
+    private static GUIStyle cachedLibPreviewPathStyle;
+    private static GUIStyle cachedLibCodeStyle;
+    private static GUIStyle cachedLibNoteStyle;
+    private static GUIStyle cachedLibCountStyle;
+
+    private static void InitializeLibraryCachedStyles()
+    {
+        if (cachedLibStatusStyle != null) return;
+
+        cachedLibStatusStyle = new GUIStyle(EditorStyles.boldLabel)
+        {
+            fontSize = 12
+        };
+
+        cachedLibDateStyle = new GUIStyle(EditorStyles.miniLabel)
+        {
+            fontSize = 9,
+            normal = { textColor = new Color(0.6f, 0.6f, 0.6f) }
+        };
+
+        cachedLibLabelStyle = new GUIStyle(EditorStyles.boldLabel)
+        {
+            fontSize = 11,
+            normal = { textColor = new Color(0.8f, 0.8f, 0.85f) }
+        };
+
+        cachedLibPathStyle = new GUIStyle(EditorStyles.textField)
+        {
+            fontSize = 11,
+            normal = { textColor = new Color(0.9f, 0.9f, 0.95f) }
+        };
+
+        cachedLibBrowseStyle = new GUIStyle(EditorStyles.miniButton)
+        {
+            fixedHeight = 18,
+            fontSize = 10
+        };
+
+        cachedLibPreviewPathStyle = new GUIStyle(EditorStyles.textField)
+        {
+            fontSize = 10,
+            normal = { textColor = new Color(0.7f, 0.7f, 0.75f) }
+        };
+
+        cachedLibCodeStyle = new GUIStyle(EditorStyles.textArea)
+        {
+            fontSize = 11,
+            wordWrap = true,
+            richText = true,
+            normal = { textColor = new Color(0.8f, 0.8f, 0.8f) }
+        };
+
+        cachedLibNoteStyle = new GUIStyle(EditorStyles.miniLabel)
+        {
+            fontSize = 9,
+            wordWrap = true,
+            alignment = TextAnchor.MiddleLeft,
+            normal = { textColor = new Color(0.7f, 0.7f, 0.7f) }
+        };
+
+        cachedLibCountStyle = new GUIStyle(EditorStyles.miniLabel)
+        {
+            fontSize = 10,
+            normal = { textColor = new Color(0.7f, 0.7f, 0.7f) }
+        };
+    }
+
     private void DrawLibrarySettings()
     {
+        InitializeLibraryCachedStyles();
+
         // Calculate the scene name and its sanitized version once
         string sceneName = uiManager.gameObject.scene.name;
         string sanitizedSceneName = SanitizeIdentifier(sceneName);
@@ -58,11 +133,7 @@ public partial class UIManagerEditor : Editor
         }
 
         // Status text
-        GUIStyle statusStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 12,
-            normal = { textColor = libraryExists ? new Color(0.3f, 0.7f, 0.3f) : new Color(0.7f, 0.7f, 0.8f) }
-        };
+        cachedLibStatusStyle.normal.textColor = libraryExists ? new Color(0.3f, 0.7f, 0.3f) : new Color(0.7f, 0.7f, 0.8f);
 
         string statusText = libraryExists ?
             "Library Status: ✓ Generated" :
@@ -71,18 +142,12 @@ public partial class UIManagerEditor : Editor
         EditorGUI.LabelField(
             new Rect(statusRect.x + 40, statusRect.y + 9, statusRect.width - 50, 18),
             statusText,
-            statusStyle
+            cachedLibStatusStyle
         );
 
         // Last updated date if available
         if (libraryExists)
         {
-            GUIStyle dateStyle = new GUIStyle(EditorStyles.miniLabel)
-            {
-                fontSize = 9,
-                normal = { textColor = new Color(0.6f, 0.6f, 0.6f) }
-            };
-
             // Get file date info
             string filePath = Path.Combine(libraryOutputPath, $"{libraryClassPrefix}{sanitizedSceneName}.cs");
             DateTime lastModified = File.GetLastWriteTime(filePath);
@@ -92,7 +157,7 @@ public partial class UIManagerEditor : Editor
             EditorGUI.LabelField(
                 new Rect(statusRect.x + 200, statusRect.y + 12, statusRect.width - 210, 14),
                 dateText,
-                dateStyle
+                cachedLibDateStyle
             );
         }
 
@@ -158,39 +223,21 @@ public partial class UIManagerEditor : Editor
 
         // Output path with browse button
         EditorGUILayout.BeginHorizontal();
-        GUIStyle labelStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 11,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.85f) }
-        };
 
         EditorGUILayout.LabelField(
             new GUIContent("Output Path", "The folder where the generated library files will be stored"),
-            labelStyle,
+            cachedLibLabelStyle,
             GUILayout.Width(100)
         );
 
-        // Custom field style
-        GUIStyle pathStyle = new GUIStyle(EditorStyles.textField)
-        {
-            fontSize = 11,
-            normal = { textColor = new Color(0.9f, 0.9f, 0.95f) }
-        };
-
-        string newPath = EditorGUILayout.TextField(libraryOutputPath, pathStyle);
+        string newPath = EditorGUILayout.TextField(libraryOutputPath, cachedLibPathStyle);
         if (newPath != libraryOutputPath)
         {
             libraryOutputPath = newPath;
             EditorPrefs.SetString(LIBRARY_OUTPUT_PATH_KEY, libraryOutputPath);
         }
 
-        GUIStyle browseStyle = new GUIStyle(EditorStyles.miniButton)
-        {
-            fixedHeight = 18,
-            fontSize = 10
-        };
-
-        if (GUILayout.Button("Browse...", browseStyle, GUILayout.Width(70)))
+        if (GUILayout.Button("Browse...", cachedLibBrowseStyle, GUILayout.Width(70)))
         {
             string selectedPath = EditorUtility.OpenFolderPanel("Select Library Output Path", "Assets", "");
             if (!string.IsNullOrEmpty(selectedPath))
@@ -215,11 +262,11 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField(
             new GUIContent("Namespace", "The namespace for the generated UI Library"),
-            labelStyle,
+            cachedLibLabelStyle,
             GUILayout.Width(100)
         );
 
-        string newNamespace = EditorGUILayout.TextField(libraryNamespace, pathStyle);
+        string newNamespace = EditorGUILayout.TextField(libraryNamespace, cachedLibPathStyle);
         if (newNamespace != libraryNamespace)
         {
             libraryNamespace = newNamespace;
@@ -233,11 +280,11 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField(
             new GUIContent("Class Prefix", "A prefix to use for the generated library classes"),
-            labelStyle,
+            cachedLibLabelStyle,
             GUILayout.Width(100)
         );
 
-        string newPrefix = EditorGUILayout.TextField(libraryClassPrefix, pathStyle);
+        string newPrefix = EditorGUILayout.TextField(libraryClassPrefix, cachedLibPathStyle);
         if (newPrefix != libraryClassPrefix)
         {
             libraryClassPrefix = newPrefix;
@@ -248,19 +295,13 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.Space(10);
 
         // Preview section
-        EditorGUILayout.LabelField("Generated File Preview:", labelStyle);
+        EditorGUILayout.LabelField("Generated File Preview:", cachedLibLabelStyle);
         EditorGUILayout.Space(2);
 
         // File path preview
-        GUIStyle previewPathStyle = new GUIStyle(EditorStyles.textField)
-        {
-            fontSize = 10,
-            normal = { textColor = new Color(0.7f, 0.7f, 0.75f) }
-        };
-
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("File:", GUILayout.Width(50));
-        EditorGUILayout.SelectableLabel($"{libraryOutputPath}/{libraryClassPrefix}{sanitizedSceneName}.cs", previewPathStyle, GUILayout.Height(20));
+        EditorGUILayout.SelectableLabel($"{libraryOutputPath}/{libraryClassPrefix}{sanitizedSceneName}.cs", cachedLibPreviewPathStyle, GUILayout.Height(20));
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space(2);
@@ -268,7 +309,7 @@ public partial class UIManagerEditor : Editor
         // Usage preview
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Usage:", GUILayout.Width(50));
-        EditorGUILayout.SelectableLabel($"using {libraryNamespace}.{sanitizedSceneName};", previewPathStyle, GUILayout.Height(20));
+        EditorGUILayout.SelectableLabel($"using {libraryNamespace}.{sanitizedSceneName};", cachedLibPreviewPathStyle, GUILayout.Height(20));
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.EndVertical();
@@ -281,14 +322,6 @@ public partial class UIManagerEditor : Editor
 
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-        GUIStyle codeStyle = new GUIStyle(EditorStyles.textArea)
-        {
-            fontSize = 11,
-            wordWrap = true,
-            richText = true,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.8f) }
-        };
-
         string example =
             "<color=#569CD6>// Get a Button component:</color>\n" +
             $"<color=#4EC9B0>Button</color> playButton = uiManager.GetUIComponent<<color=#4EC9B0>Button</color>>({libraryClassPrefix}{sanitizedSceneName}.<color=#DCDCAA>PlayButton_Path</color>);\n\n" +
@@ -296,22 +329,14 @@ public partial class UIManagerEditor : Editor
             $"uiManager.SetUIComponentListener<<color=#4EC9B0>Button</color>>({libraryClassPrefix}{sanitizedSceneName}.<color=#DCDCAA>PlayButton_Path</color>, <color=#DCDCAA>OnPlayClicked</color>);";
 
         // Disable editing in the Inspector
-        EditorGUILayout.SelectableLabel(example, codeStyle, GUILayout.Height(95));
+        EditorGUILayout.SelectableLabel(example, cachedLibCodeStyle, GUILayout.Height(95));
 
         EditorGUILayout.Space(5);
-
-        GUIStyle noteStyle = new GUIStyle(EditorStyles.miniLabel)
-        {
-            fontSize = 9,
-            wordWrap = true,
-            alignment = TextAnchor.MiddleLeft,
-            normal = { textColor = new Color(0.7f, 0.7f, 0.7f) }
-        };
 
         EditorGUILayout.LabelField(
             "Note: The UI library provides convenient access to your UI elements through path constants, " +
             "making your code more maintainable and less prone to errors from hardcoded paths.",
-            noteStyle
+            cachedLibNoteStyle
         );
 
         EditorGUILayout.EndVertical();
@@ -323,15 +348,9 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
 
-        GUIStyle countStyle = new GUIStyle(EditorStyles.miniLabel)
-        {
-            fontSize = 10,
-            normal = { textColor = new Color(0.7f, 0.7f, 0.7f) }
-        };
-
         EditorGUILayout.LabelField(
             $"UI Elements: {addedUIElements.Count} | Categories: {uiManager.GetAllUICategoriesMutable().Count()}",
-            countStyle
+            cachedLibCountStyle
         );
 
         GUILayout.FlexibleSpace();
@@ -835,6 +854,49 @@ public class CodePreviewWindow : EditorWindow
     private bool isDragging = false;
     private Rect dragArea;
 
+    // Cached GUIStyle fields (avoid per-frame allocations)
+    private static GUIStyle cachedFileNameStyle;
+    private static GUIStyle cachedCodeStyle;
+    private static GUIStyle cachedLineNumberStyle;
+    private static GUIStyle cachedStatusStyle;
+
+    private static void InitializeCodePreviewCachedStyles()
+    {
+        if (cachedFileNameStyle != null) return;
+
+        cachedFileNameStyle = new GUIStyle(EditorStyles.boldLabel)
+        {
+            fontSize = 12,
+            normal = { textColor = new Color(0.8f, 0.8f, 0.9f) }
+        };
+
+        cachedCodeStyle = new GUIStyle(EditorStyles.textArea)
+        {
+            font = EditorGUIUtility.Load("Fonts/RobotoMono/RobotoMono-Regular.ttf") as Font,
+            fontSize = 12,
+            wordWrap = false,
+            richText = true,
+            border = new RectOffset(0, 0, 0, 0),
+            normal = {
+                background = null,
+                textColor = new Color(0.9f, 0.9f, 0.9f)
+            }
+        };
+
+        cachedLineNumberStyle = new GUIStyle(EditorStyles.miniLabel)
+        {
+            fontSize = 10,
+            alignment = TextAnchor.MiddleRight,
+            normal = { textColor = new Color(0.4f, 0.4f, 0.5f, 0.8f) }
+        };
+
+        cachedStatusStyle = new GUIStyle(EditorStyles.miniLabel)
+        {
+            fontSize = 10,
+            normal = { textColor = new Color(0.7f, 0.7f, 0.75f) }
+        };
+    }
+
     public void SetContent(string content, string filename)
     {
         codeContent = content;
@@ -855,6 +917,8 @@ public class CodePreviewWindow : EditorWindow
 
     private void OnGUI()
     {
+        InitializeCodePreviewCachedStyles();
+
         DrawToolbar();
         DrawCodeEditor();
         DrawStatusBar();
@@ -871,16 +935,10 @@ public class CodePreviewWindow : EditorWindow
         EditorGUI.DrawRect(new Rect(0, toolbarRect.height - 1, position.width, 1), new Color(0.3f, 0.3f, 0.35f));
 
         // File name display
-        GUIStyle fileNameStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 12,
-            normal = { textColor = new Color(0.8f, 0.8f, 0.9f) }
-        };
-
         EditorGUI.LabelField(
             new Rect(10, 5, 250, 20),
             fileName,
-            fileNameStyle
+            cachedFileNameStyle
         );
 
         // Copy button
@@ -925,19 +983,8 @@ public class CodePreviewWindow : EditorWindow
             EditorGUIUtility.AddCursorRect(dragArea, MouseCursor.ResizeHorizontal);
         }
 
-        // Code content
-        GUIStyle codeStyle = new GUIStyle(EditorStyles.textArea)
-        {
-            font = EditorGUIUtility.Load("Fonts/RobotoMono/RobotoMono-Regular.ttf") as Font,
-            fontSize = 12,
-            wordWrap = false,
-            richText = true,
-            border = new RectOffset(0, 0, 0, 0),
-            normal = {
-                background = null,
-                textColor = identifierColor
-            }
-        };
+        // Code content - use cached style, update mutable textColor per-call
+        cachedCodeStyle.normal.textColor = identifierColor;
 
         // Calculate line count for line numbers
         int lineCount = codeContent.Split('\n').Length;
@@ -960,19 +1007,15 @@ public class CodePreviewWindow : EditorWindow
         );
 
         // Draw the code with syntax highlighting (already processed in the content)
-        GUI.Label(new Rect(5, 5, contentWidth, contentHeight - 10), codeContent, codeStyle);
+        GUI.Label(new Rect(5, 5, contentWidth, contentHeight - 10), codeContent, cachedCodeStyle);
 
         GUI.EndScrollView();
 
         // Draw line numbers OUTSIDE scroll view if enabled
         if (showLineNumbers)
         {
-            GUIStyle lineNumberStyle = new GUIStyle(EditorStyles.miniLabel)
-            {
-                fontSize = 10,
-                alignment = TextAnchor.MiddleRight,
-                normal = { textColor = lineNumberColor }
-            };
+            // Update cached line number style with current color
+            cachedLineNumberStyle.normal.textColor = lineNumberColor;
 
             // Calculate visible line range based on scroll position
             int firstVisibleLine = Mathf.FloorToInt(scrollPosition.y / 18);
@@ -988,7 +1031,7 @@ public class CodePreviewWindow : EditorWindow
                     GUI.Label(
                         new Rect(5, yPos, leftMargin - 10, 18),
                         (i + 1).ToString(),
-                        lineNumberStyle
+                        cachedLineNumberStyle
                     );
                 }
             }
@@ -1003,17 +1046,11 @@ public class CodePreviewWindow : EditorWindow
         EditorGUI.DrawRect(new Rect(0, statusRect.y, position.width, 1), new Color(0.3f, 0.3f, 0.35f));
 
         // Line count display
-        GUIStyle statusStyle = new GUIStyle(EditorStyles.miniLabel)
-        {
-            fontSize = 10,
-            normal = { textColor = new Color(0.7f, 0.7f, 0.75f) }
-        };
-
         int lineCount = codeContent.Split('\n').Length;
         EditorGUI.LabelField(
             new Rect(10, position.height - 19, 200, 16),
             $"Lines: {lineCount}",
-            statusStyle
+            cachedStatusStyle
         );
 
         // Close button

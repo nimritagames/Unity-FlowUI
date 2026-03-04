@@ -9,8 +9,72 @@ public partial class UIManagerEditor : Editor
 {
     #region Missing References
 
+    // Cached GUIStyle fields to avoid per-frame allocations
+    private static GUIStyle cachedMissingWarningStyle;
+    private static GUIStyle cachedMissingSuccessStyle;
+    private static GUIStyle cachedMissingTypeStyle;
+    private static GUIStyle cachedMissingNameStyle;
+    private static GUIStyle cachedMissingHeaderTextStyle;
+    private static GUIStyle cachedMissingPathStyle;
+    private static GUIStyle cachedMissingSuggestionTextStyle;
+    private static GUIStyle cachedMissingErrorTextStyle;
+
+    private static void InitializeMissingRefsCachedStyles()
+    {
+        if (cachedMissingWarningStyle != null) return;
+
+        cachedMissingWarningStyle = new GUIStyle(EditorStyles.boldLabel)
+        {
+            fontSize = 12
+        };
+
+        cachedMissingSuccessStyle = new GUIStyle(EditorStyles.boldLabel)
+        {
+            fontSize = 12
+        };
+
+        cachedMissingTypeStyle = new GUIStyle(EditorStyles.miniLabel)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            fontSize = 9,
+            fontStyle = FontStyle.Bold,
+            normal = { textColor = Color.white }
+        };
+
+        cachedMissingNameStyle = new GUIStyle(EditorStyles.boldLabel)
+        {
+            fontSize = 12
+        };
+
+        cachedMissingHeaderTextStyle = new GUIStyle(EditorStyles.miniBoldLabel)
+        {
+            fontSize = 10
+        };
+
+        cachedMissingPathStyle = new GUIStyle(EditorStyles.textField)
+        {
+            fontSize = 10,
+            wordWrap = true
+        };
+
+        cachedMissingSuggestionTextStyle = new GUIStyle(EditorStyles.label)
+        {
+            fontSize = 11,
+            wordWrap = true,
+            fontStyle = FontStyle.Bold
+        };
+
+        cachedMissingErrorTextStyle = new GUIStyle(EditorStyles.label)
+        {
+            fontSize = 11,
+            wordWrap = true
+        };
+    }
+
     private void DrawMissingReferencesSection()
     {
+        InitializeMissingRefsCachedStyles();
+
         DrawSectionHeader("Missing References",
             "Identify and fix UI references that are broken or missing. \nFix or remove these references before generating your UI Library.");
 
@@ -111,16 +175,12 @@ public partial class UIManagerEditor : Editor
             }
 
             // Status text
-            GUIStyle warningStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                fontSize = 12,
-                normal = { textColor = new Color(0.8f, 0.6f, 0.2f) }
-            };
+            cachedMissingWarningStyle.normal.textColor = new Color(0.8f, 0.6f, 0.2f);
 
             EditorGUI.LabelField(
                 new Rect(statusRect.x + 40, statusRect.y + 9, statusRect.width - 50, 18),
                 $"Found {missingReferences.Count} missing UI references",
-                warningStyle
+                cachedMissingWarningStyle
             );
 
             EditorGUILayout.EndVertical();
@@ -153,16 +213,12 @@ public partial class UIManagerEditor : Editor
             }
 
             // Status text
-            GUIStyle successStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                fontSize = 12,
-                normal = { textColor = new Color(0.3f, 0.7f, 0.3f) }
-            };
+            cachedMissingSuccessStyle.normal.textColor = new Color(0.3f, 0.7f, 0.3f);
 
             EditorGUI.LabelField(
                 new Rect(statusRect.x + 40, statusRect.y + 9, statusRect.width - 50, 18),
                 "No missing UI references found. All references are valid.",
-                successStyle
+                cachedMissingSuccessStyle
             );
 
             EditorGUILayout.EndVertical();
@@ -221,27 +277,15 @@ public partial class UIManagerEditor : Editor
         }
 
         // Type text
-        GUIStyle typeStyle = new GUIStyle(EditorStyles.miniLabel)
-        {
-            alignment = TextAnchor.MiddleCenter,
-            fontSize = 9,
-            fontStyle = FontStyle.Bold,
-            normal = { textColor = Color.white }
-        };
-
-        EditorGUI.LabelField(typePillRect, missingRef.elementType.ToString(), typeStyle);
+        EditorGUI.LabelField(typePillRect, missingRef.elementType.ToString(), cachedMissingTypeStyle);
 
         // Element name
-        GUIStyle nameStyle = new GUIStyle(EditorStyles.boldLabel)
-        {
-            fontSize = 12,
-            normal = { textColor = isSelected ? new Color(0.7f, 0.85f, 1f) : new Color(0.9f, 0.9f, 0.95f) }
-        };
+        cachedMissingNameStyle.normal.textColor = isSelected ? new Color(0.7f, 0.85f, 1f) : new Color(0.9f, 0.9f, 0.95f);
 
         EditorGUI.LabelField(
             new Rect(headerRect.x + 88, headerRect.y + 8, headerRect.width - 280, 20),
             missingRef.name,
-            nameStyle
+            cachedMissingNameStyle
         );
 
         // Action buttons with GuiContent
@@ -324,29 +368,20 @@ public partial class UIManagerEditor : Editor
             // Path section
             EditorGUILayout.Space(8);
 
-            GUIStyle headerTextStyle = new GUIStyle(EditorStyles.miniBoldLabel)
-            {
-                fontSize = 10,
-                normal = { textColor = new Color(0.7f, 0.7f, 0.9f) }
-            };
+            cachedMissingHeaderTextStyle.normal.textColor = new Color(0.7f, 0.7f, 0.9f);
 
-            EditorGUILayout.LabelField("Path:", headerTextStyle);
+            EditorGUILayout.LabelField("Path:", cachedMissingHeaderTextStyle);
 
             // Path field with selectable text
-            GUIStyle pathStyle = new GUIStyle(EditorStyles.textField)
-            {
-                fontSize = 10,
-                wordWrap = true,
-                normal = { textColor = new Color(0.8f, 0.8f, 0.8f) }
-            };
+            cachedMissingPathStyle.normal.textColor = new Color(0.8f, 0.8f, 0.8f);
 
-            EditorGUILayout.SelectableLabel(missingRef.fullPath, pathStyle, GUILayout.Height(20));
+            EditorGUILayout.SelectableLabel(missingRef.fullPath, cachedMissingPathStyle, GUILayout.Height(20));
 
             EditorGUILayout.Space(4);
 
             // ID section
-            EditorGUILayout.LabelField("Instance ID:", headerTextStyle);
-            EditorGUILayout.SelectableLabel(missingRef.instanceID.ToString(), pathStyle, GUILayout.Height(20));
+            EditorGUILayout.LabelField("Instance ID:", cachedMissingHeaderTextStyle);
+            EditorGUILayout.SelectableLabel(missingRef.instanceID.ToString(), cachedMissingPathStyle, GUILayout.Height(20));
 
             EditorGUILayout.Space(5);
             EditorGUILayout.EndVertical();
@@ -381,18 +416,12 @@ public partial class UIManagerEditor : Editor
                 }
 
                 // Suggestion text
-                GUIStyle suggestionTextStyle = new GUIStyle(EditorStyles.label)
-                {
-                    fontSize = 11,
-                    wordWrap = true,
-                    fontStyle = FontStyle.Bold,
-                    normal = { textColor = new Color(0.3f, 0.7f, 0.3f) }
-                };
+                cachedMissingSuggestionTextStyle.normal.textColor = new Color(0.3f, 0.7f, 0.3f);
 
                 EditorGUI.LabelField(
                     new Rect(suggestionRect.x + 32, suggestionRect.y + 4, suggestionRect.width - 120, suggestionRect.height - 8),
                     $"Possible match found:\n{possibleMatch.name}",
-                    suggestionTextStyle
+                    cachedMissingSuggestionTextStyle
                 );
 
                 // Apply fix button
@@ -434,17 +463,12 @@ public partial class UIManagerEditor : Editor
                 }
 
                 // Error text
-                GUIStyle errorTextStyle = new GUIStyle(EditorStyles.label)
-                {
-                    fontSize = 11,
-                    wordWrap = true,
-                    normal = { textColor = new Color(0.8f, 0.4f, 0.4f) }
-                };
+                cachedMissingErrorTextStyle.normal.textColor = new Color(0.8f, 0.4f, 0.4f);
 
                 EditorGUI.LabelField(
                     new Rect(errorRect.x + 32, errorRect.y, errorRect.width - 40, errorRect.height),
                     "No automatic fix available. You may need to manually reassign this reference.",
-                    errorTextStyle
+                    cachedMissingErrorTextStyle
                 );
 
                 EditorGUILayout.Space(36); // Space for the error content

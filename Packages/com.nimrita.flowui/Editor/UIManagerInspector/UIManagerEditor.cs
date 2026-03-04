@@ -35,6 +35,8 @@ public partial class UIManagerEditor : Editor
     private static GUIStyle cachedDescStyle;
     private static GUIStyle cachedMiniLabelStyle;
     private static GUIStyle cachedTextMeasureStyle;
+    private static GUIStyle cachedDescCalcStyle;
+    private static GUIStyle cachedTipStyle;
 
     // Library Generation Settings
     private string libraryOutputPath;
@@ -179,6 +181,8 @@ public partial class UIManagerEditor : Editor
             cachedDescStyle = new GUIStyle(EditorStyles.label);
             cachedMiniLabelStyle = new GUIStyle(EditorStyles.miniLabel);
             cachedTextMeasureStyle = new GUIStyle(EditorStyles.boldLabel);
+            cachedDescCalcStyle = new GUIStyle(EditorStyles.label);
+            cachedTipStyle = new GUIStyle(EditorStyles.miniLabel) { wordWrap = true };
         }
     }
 
@@ -1229,13 +1233,11 @@ public partial class UIManagerEditor : Editor
         if (!string.IsNullOrEmpty(description))
         {
             int descFontSize = GetResponsiveFontSize(10, 9, 8);
-            descCalcStyle = new GUIStyle(EditorStyles.label)
-            {
-                fontSize = descFontSize,
-                wordWrap = true,
-                margin = new RectOffset(0, 0, 0, 0),
-                padding = new RectOffset(0, 0, 0, 0)
-            };
+            descCalcStyle = cachedDescCalcStyle;
+            descCalcStyle.fontSize = descFontSize;
+            descCalcStyle.wordWrap = true;
+            descCalcStyle.margin = new RectOffset(0, 0, 0, 0);
+            descCalcStyle.padding = new RectOffset(0, 0, 0, 0);
 
             // Account for text padding in width calculation
             float textPadding = GetResponsivePadding(12f);
@@ -1574,11 +1576,10 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.LabelField("💡 Naming Best Practices:", EditorStyles.boldLabel);
         EditorGUILayout.Space(3);
 
-        var tipStyle = new GUIStyle(EditorStyles.miniLabel) { wordWrap = true };
-        EditorGUILayout.LabelField("✅ Be descriptive: 'PlayButton' not 'Button'", tipStyle);
-        EditorGUILayout.LabelField("✅ Include purpose: 'UsernameField' not 'InputField'", tipStyle);
-        EditorGUILayout.LabelField("✅ Use context: 'Login_SubmitButton' for clarity", tipStyle);
-        EditorGUILayout.LabelField("❌ Avoid Unity defaults like 'Button (1)', 'Text (2)'", tipStyle);
+        EditorGUILayout.LabelField("✅ Be descriptive: 'PlayButton' not 'Button'", cachedTipStyle);
+        EditorGUILayout.LabelField("✅ Include purpose: 'UsernameField' not 'InputField'", cachedTipStyle);
+        EditorGUILayout.LabelField("✅ Use context: 'Login_SubmitButton' for clarity", cachedTipStyle);
+        EditorGUILayout.LabelField("❌ Avoid Unity defaults like 'Button (1)', 'Text (2)'", cachedTipStyle);
 
         EditorGUILayout.EndVertical();
     }
