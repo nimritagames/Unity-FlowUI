@@ -37,6 +37,8 @@ public partial class UIManagerEditor : Editor
     private static GUIStyle cachedTextMeasureStyle;
     private static GUIStyle cachedDescCalcStyle;
     private static GUIStyle cachedTipStyle;
+    private static GUIStyle cachedDarkPanelStyle;
+    private static GUIStyle cachedMiniActionButtonStyle;
 
     // Library Generation Settings
     private string libraryOutputPath;
@@ -268,14 +270,24 @@ public partial class UIManagerEditor : Editor
         Rect titleRect = EditorGUILayout.GetControlRect(false, titleHeight);
         if (Event.current.type == EventType.Repaint)
         {
-            Color topColor = new Color(0.2f, 0.2f, 0.3f);
-            Color bottomColor = new Color(0.15f, 0.15f, 0.2f);
+            // Accent bar at the top
+            Color accentColor = new Color(0.35f, 0.45f, 0.75f);
+            EditorGUI.DrawRect(new Rect(titleRect.x, titleRect.y, titleRect.width, 2f), accentColor);
 
-            // Draw gradient background
-            EditorGUI.DrawRect(new Rect(titleRect.x, titleRect.y, titleRect.width, titleRect.height / 2), topColor);
-            EditorGUI.DrawRect(new Rect(titleRect.x, titleRect.y + titleRect.height / 2, titleRect.width, titleRect.height / 2), bottomColor);
+            // Smooth 4-step gradient background
+            float gradientStart = titleRect.y + 2f;
+            float gradientHeight = titleRect.height - 2f;
+            float stepHeight = gradientHeight / 4f;
+            Color c0 = new Color(0.22f, 0.22f, 0.32f);
+            Color c1 = new Color(0.19f, 0.19f, 0.28f);
+            Color c2 = new Color(0.17f, 0.17f, 0.24f);
+            Color c3 = new Color(0.14f, 0.14f, 0.20f);
+            EditorGUI.DrawRect(new Rect(titleRect.x, gradientStart, titleRect.width, stepHeight), c0);
+            EditorGUI.DrawRect(new Rect(titleRect.x, gradientStart + stepHeight, titleRect.width, stepHeight), c1);
+            EditorGUI.DrawRect(new Rect(titleRect.x, gradientStart + stepHeight * 2, titleRect.width, stepHeight), c2);
+            EditorGUI.DrawRect(new Rect(titleRect.x, gradientStart + stepHeight * 3, titleRect.width, stepHeight), c3);
 
-            // Draw subtle border
+            // Bottom border
             Color borderColor = new Color(0.3f, 0.3f, 0.4f);
             EditorGUI.DrawRect(new Rect(titleRect.x, titleRect.y + titleRect.height - 1, titleRect.width, 1), borderColor);
         }
@@ -290,7 +302,11 @@ public partial class UIManagerEditor : Editor
         cachedTitleStyle.alignment = TextAnchor.MiddleCenter;
         cachedTitleStyle.normal.textColor = new Color(0.9f, 0.9f, 0.95f);
 
-        // Header with responsive logo
+        // Header with text shadow for depth
+        Color origTitleColor = cachedTitleStyle.normal.textColor;
+        cachedTitleStyle.normal.textColor = new Color(0f, 0f, 0f, 0.35f);
+        EditorGUI.LabelField(new Rect(titleRect.x + 1, titleRect.y + titleTopPadding + 1, titleRect.width, titleHeight_Text), "UI Framework", cachedTitleStyle);
+        cachedTitleStyle.normal.textColor = origTitleColor;
         EditorGUI.LabelField(new Rect(titleRect.x, titleRect.y + titleTopPadding, titleRect.width, titleHeight_Text), "UI Framework", cachedTitleStyle);
 
         // Logo placement with responsive sizing
@@ -311,11 +327,34 @@ public partial class UIManagerEditor : Editor
             // Use cached style
             cachedLinkStyle.fontSize = linkFontSize;
             cachedLinkStyle.alignment = TextAnchor.MiddleCenter;
-            cachedLinkStyle.normal.textColor = new Color(0.7f, 0.85f, 1f);
+            cachedLinkStyle.normal.textColor = new Color(0.6f, 0.75f, 0.95f);
 
-            if (GUI.Button(new Rect(titleRect.x, titleRect.y + linkTopOffset, titleRect.width, 18), "Quick Start Guide", cachedLinkStyle))
+            Rect linkRect = new Rect(titleRect.x, titleRect.y + linkTopOffset, titleRect.width, 18);
+            string linkText = "\u25B8 Quick Start Guide";
+            bool isHovered = linkRect.Contains(Event.current.mousePosition);
+
+            // Hover highlight + hand cursor
+            if (isHovered)
+            {
+                cachedLinkStyle.normal.textColor = new Color(0.8f, 0.9f, 1f);
+                EditorGUIUtility.AddCursorRect(linkRect, MouseCursor.Link);
+            }
+
+            if (GUI.Button(linkRect, linkText, cachedLinkStyle))
             {
                 ShowQuickStartGuide();
+            }
+
+            // Draw underline to signal clickability
+            if (Event.current.type == EventType.Repaint)
+            {
+                Vector2 textSize = cachedLinkStyle.CalcSize(new GUIContent(linkText));
+                float underlineX = linkRect.x + (linkRect.width - textSize.x) / 2f;
+                float underlineY = linkRect.y + linkRect.height - 2f;
+                Color underlineColor = isHovered
+                    ? new Color(0.8f, 0.9f, 1f, 0.6f)
+                    : new Color(0.6f, 0.75f, 0.95f, 0.35f);
+                EditorGUI.DrawRect(new Rect(underlineX, underlineY, textSize.x, 1f), underlineColor);
             }
         }
     }
@@ -1403,27 +1442,17 @@ public partial class UIManagerEditor : Editor
         if (mode == ResponsiveMode.Narrow)
         {
             // Stack buttons vertically in narrow mode
-            foreach (var button in buttons)
+            for (int i = 0; i < buttons.Length; i++)
             {
                 Rect buttonRect = EditorGUILayout.GetControlRect(false, buttonHeight);
                 float padding = GetResponsivePadding(5f);
                 buttonRect.x += padding;
                 buttonRect.width -= 2 * padding;
 
-                DrawActionButton(buttonRect, button.Label, button.Tooltip, button.OnClick, button.IsPrimary);
-                for (int i = 0; i < buttons.Length; i++)
-                {
-                    buttonRect.x += padding;
-                    buttonRect.width -= 2 * padding;
+                DrawActionButton(buttonRect, buttons[i].Label, buttons[i].Tooltip, buttons[i].OnClick, buttons[i].IsPrimary);
 
-                    DrawActionButton(buttonRect, button.Label, button.Tooltip, button.OnClick, button.IsPrimary);
-
-                    if (i < buttons.Length - 1)
-                    {
-                        EditorGUILayout.Space(spacing);
-                    }
-                }
-
+                if (i < buttons.Length - 1)
+                    EditorGUILayout.Space(spacing);
             }
         }
         else
@@ -1498,13 +1527,137 @@ public partial class UIManagerEditor : Editor
     }
 
     /// <summary>
+    /// Returns a cached dark panel GUIStyle to replace EditorStyles.helpBox.
+    /// Null-checks both the style and its background texture to survive domain reloads.
+    /// </summary>
+    private static GUIStyle GetDarkPanelStyle()
+    {
+        if (cachedDarkPanelStyle == null || cachedDarkPanelStyle.normal.background == null)
+        {
+            cachedDarkPanelStyle = new GUIStyle
+            {
+                border = new RectOffset(4, 4, 4, 4),
+                padding = new RectOffset(10, 10, 10, 10),
+                margin = new RectOffset(4, 4, 2, 2)
+            };
+            cachedDarkPanelStyle.normal.background = MakeColorTexture(new Color(0.18f, 0.18f, 0.20f));
+        }
+        return cachedDarkPanelStyle;
+    }
+
+    /// <summary>
+    /// Draws a small inline action button (Fix, Remove, Select, etc.).
+    /// Returns true if clicked.
+    /// </summary>
+    private bool DrawMiniActionButton(Rect rect, string label, Color? bgOverride = null)
+    {
+        Color bgColor = bgOverride ?? new Color(0.3f, 0.3f, 0.35f);
+        bool isHovering = rect.Contains(Event.current.mousePosition);
+
+        if (Event.current.type == EventType.Repaint)
+        {
+            Color currentColor = isHovering
+                ? new Color(Mathf.Min(bgColor.r + 0.08f, 1f), Mathf.Min(bgColor.g + 0.08f, 1f), Mathf.Min(bgColor.b + 0.08f, 1f))
+                : bgColor;
+
+            EditorGUI.DrawRect(rect, currentColor);
+
+            // Top highlight
+            EditorGUI.DrawRect(
+                new Rect(rect.x, rect.y, rect.width, 1),
+                new Color(currentColor.r + 0.06f, currentColor.g + 0.06f, currentColor.b + 0.06f, 0.8f)
+            );
+        }
+
+        if (cachedMiniActionButtonStyle == null)
+        {
+            cachedMiniActionButtonStyle = new GUIStyle(EditorStyles.label)
+            {
+                fontSize = 10,
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = new Color(0.9f, 0.9f, 0.95f) }
+            };
+        }
+
+        EditorGUI.LabelField(rect, label, cachedMiniActionButtonStyle);
+
+        if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
+        {
+            Event.current.Use();
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Draws an inline warning bar replacing EditorGUILayout.HelpBox with MessageType.Warning.
+    /// </summary>
+    private void DrawInlineWarning(string message)
+    {
+        Rect barRect = EditorGUILayout.GetControlRect(false, 24);
+
+        if (Event.current.type == EventType.Repaint)
+        {
+            // Background
+            EditorGUI.DrawRect(barRect, new Color(0.25f, 0.22f, 0.18f));
+            // Left accent stripe (orange)
+            EditorGUI.DrawRect(new Rect(barRect.x, barRect.y, 3, barRect.height), new Color(0.9f, 0.6f, 0.2f));
+        }
+
+        // Warning icon
+        Texture2D warnIcon = EditorGUIUtility.IconContent("console.warnicon.sml").image as Texture2D;
+        if (warnIcon != null)
+        {
+            GUI.DrawTexture(new Rect(barRect.x + 8, barRect.y + 4, 16, 16), warnIcon);
+        }
+
+        // Text
+        EditorGUI.LabelField(
+            new Rect(barRect.x + 28, barRect.y, barRect.width - 32, barRect.height),
+            message,
+            EditorStyles.miniLabel
+        );
+    }
+
+    /// <summary>
+    /// Draws an inline info bar replacing EditorGUILayout.HelpBox with MessageType.Info.
+    /// </summary>
+    private void DrawInlineInfo(string message)
+    {
+        Rect barRect = EditorGUILayout.GetControlRect(false, 24);
+
+        if (Event.current.type == EventType.Repaint)
+        {
+            // Background
+            EditorGUI.DrawRect(barRect, new Color(0.18f, 0.20f, 0.25f));
+            // Left accent stripe (blue)
+            EditorGUI.DrawRect(new Rect(barRect.x, barRect.y, 3, barRect.height), new Color(0.3f, 0.5f, 0.9f));
+        }
+
+        // Info icon
+        Texture2D infoIcon = EditorGUIUtility.IconContent("d_console.infoicon.sml").image as Texture2D;
+        if (infoIcon != null)
+        {
+            GUI.DrawTexture(new Rect(barRect.x + 8, barRect.y + 4, 16, 16), infoIcon);
+        }
+
+        // Text
+        EditorGUI.LabelField(
+            new Rect(barRect.x + 28, barRect.y, barRect.width - 32, barRect.height),
+            message,
+            EditorStyles.miniLabel
+        );
+    }
+
+    /// <summary>
     /// Draws the Smart Naming Assistant section.
     /// </summary>
     private void DrawSmartNamingSection()
     {
         DrawSectionHeader("Smart Naming Assistant",
             "Automatically fix poorly named UI elements and resolve naming conflicts.\n" +
-            "Because you should have named them properly from the start 😉");
+            "Because you should have named them properly from the start.");
 
         float spacing = GetResponsiveSpacing(10f);
         EditorGUILayout.Space(spacing);
@@ -1514,7 +1667,7 @@ public partial class UIManagerEditor : Editor
         var badlyNamedCount = CountBadlyNamedElements(allUIElements);
         var totalElements = allUIElements.Count;
 
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         // Status indicator
         if (badlyNamedCount > 0)
@@ -1524,13 +1677,26 @@ public partial class UIManagerEditor : Editor
             cachedWarningStyle.fontSize = 12;
             cachedWarningStyle.wordWrap = true;
 
-            EditorGUILayout.LabelField($"⚠️ Found {badlyNamedCount} of {totalElements} elements with naming issues", cachedWarningStyle);
+            // Warning icon + text
+            EditorGUILayout.BeginHorizontal();
+            Texture2D warnIcon = EditorGUIUtility.IconContent("console.warnicon.sml").image as Texture2D;
+            if (warnIcon != null)
+            {
+                GUILayout.Label(warnIcon, GUILayout.Width(16), GUILayout.Height(16));
+                GUILayout.Space(4);
+            }
+            EditorGUILayout.LabelField($"Found {badlyNamedCount} of {totalElements} elements with naming issues", cachedWarningStyle);
+            EditorGUILayout.EndHorizontal();
             EditorGUILayout.Space(5);
 
-            if (GUILayout.Button("🔧 Open Smart Naming Assistant", GUILayout.Height(35)))
-            {
-                SmartNamingAssistant.ShowWindow(uiManager);
-            }
+            Rect openBtnRect = EditorGUILayout.GetControlRect(false, 35);
+            DrawActionButton(
+                openBtnRect,
+                "Open Smart Naming Assistant",
+                "Open the Smart Naming Assistant window to fix naming issues",
+                () => SmartNamingAssistant.ShowWindow(uiManager),
+                true
+            );
 
             EditorGUILayout.Space(5);
 
@@ -1542,7 +1708,13 @@ public partial class UIManagerEditor : Editor
                 foreach (var badName in sampleBadNames)
                 {
                     EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField($"❌ {badName}", EditorStyles.miniLabel, GUILayout.Width(120));
+                    Texture2D errIcon = EditorGUIUtility.IconContent("console.erroricon.sml").image as Texture2D;
+                    if (errIcon != null)
+                    {
+                        GUILayout.Label(errIcon, GUILayout.Width(14), GUILayout.Height(14));
+                        GUILayout.Space(2);
+                    }
+                    EditorGUILayout.LabelField(badName, EditorStyles.miniLabel, GUILayout.Width(120));
                     EditorGUILayout.LabelField("(needs better naming)", EditorStyles.miniLabel);
                     EditorGUILayout.EndHorizontal();
                 }
@@ -1560,15 +1732,27 @@ public partial class UIManagerEditor : Editor
             cachedSuccessStyle.fontSize = 12;
             cachedSuccessStyle.wordWrap = true;
 
-            EditorGUILayout.LabelField($"✅ All {totalElements} UI elements have proper names!", cachedSuccessStyle);
+            // Success icon + text
+            EditorGUILayout.BeginHorizontal();
+            Texture2D successIcon = EditorGUIUtility.IconContent("d_forward@2x").image as Texture2D;
+            if (successIcon != null)
+            {
+                GUILayout.Label(successIcon, GUILayout.Width(16), GUILayout.Height(16));
+                GUILayout.Space(4);
+            }
+            EditorGUILayout.LabelField($"All {totalElements} UI elements have proper names!", cachedSuccessStyle);
+            EditorGUILayout.EndHorizontal();
             EditorGUILayout.Space(5);
 
-            EditorGUILayout.LabelField("Your naming is on point! 🎯", EditorStyles.centeredGreyMiniLabel);
+            EditorGUILayout.LabelField("Your naming is on point!", EditorStyles.centeredGreyMiniLabel);
 
-            if (GUILayout.Button("🔍 Run Detailed Analysis Anyway", GUILayout.Height(30)))
-            {
-                SmartNamingAssistant.ShowWindow(uiManager);
-            }
+            Rect analyzeRect = EditorGUILayout.GetControlRect(false, 30);
+            DrawActionButton(
+                analyzeRect,
+                "Run Detailed Analysis Anyway",
+                "Open the Smart Naming Assistant for a full analysis",
+                () => SmartNamingAssistant.ShowWindow(uiManager)
+            );
         }
 
         EditorGUILayout.EndVertical();
@@ -1576,16 +1760,42 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.Space(spacing);
 
         // Quick tips section
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-        EditorGUILayout.LabelField("💡 Naming Best Practices:", EditorStyles.boldLabel);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
+
+        // Info icon + header
+        EditorGUILayout.BeginHorizontal();
+        Texture2D infoIcon = EditorGUIUtility.IconContent("d_console.infoicon.sml").image as Texture2D;
+        if (infoIcon != null)
+        {
+            GUILayout.Label(infoIcon, GUILayout.Width(16), GUILayout.Height(16));
+            GUILayout.Space(4);
+        }
+        EditorGUILayout.LabelField("Naming Best Practices:", EditorStyles.boldLabel);
+        EditorGUILayout.EndHorizontal();
         EditorGUILayout.Space(3);
 
-        EditorGUILayout.LabelField("✅ Be descriptive: 'PlayButton' not 'Button'", cachedTipStyle);
-        EditorGUILayout.LabelField("✅ Include purpose: 'UsernameField' not 'InputField'", cachedTipStyle);
-        EditorGUILayout.LabelField("✅ Use context: 'Login_SubmitButton' for clarity", cachedTipStyle);
-        EditorGUILayout.LabelField("❌ Avoid Unity defaults like 'Button (1)', 'Text (2)'", cachedTipStyle);
+        DrawSmartNamingTipLine("d_forward@2x", "Be descriptive: 'PlayButton' not 'Button'");
+        DrawSmartNamingTipLine("d_forward@2x", "Include purpose: 'UsernameField' not 'InputField'");
+        DrawSmartNamingTipLine("d_forward@2x", "Use context: 'Login_SubmitButton' for clarity");
+        DrawSmartNamingTipLine("console.erroricon.sml", "Avoid Unity defaults like 'Button (1)', 'Text (2)'");
 
         EditorGUILayout.EndVertical();
+    }
+
+    /// <summary>
+    /// Helper to draw a single tip line with a Unity icon.
+    /// </summary>
+    private void DrawSmartNamingTipLine(string iconName, string text)
+    {
+        EditorGUILayout.BeginHorizontal();
+        Texture2D icon = EditorGUIUtility.IconContent(iconName).image as Texture2D;
+        if (icon != null)
+        {
+            GUILayout.Label(icon, GUILayout.Width(14), GUILayout.Height(14));
+            GUILayout.Space(2);
+        }
+        EditorGUILayout.LabelField(text, cachedTipStyle);
+        EditorGUILayout.EndHorizontal();
     }
 
     #region Smart Naming Helper Methods
@@ -1669,23 +1879,9 @@ public partial class UIManagerEditor : Editor
         float spacing = GetResponsiveSpacing(10f);
         EditorGUILayout.Space(spacing);
 
-        // UI Categories section with responsive styling
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        // Utility actions
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
-        ResponsiveMode mode = GetResponsiveMode();
-        int categoryHeaderFontSize = GetResponsiveFontSize(12, 11, 11);
-
-        // Use cached style
-        cachedCategoryHeaderStyle.fontSize = categoryHeaderFontSize;
-        cachedCategoryHeaderStyle.normal.textColor = new Color(0.8f, 0.8f, 0.9f);
-
-        EditorGUILayout.LabelField("UI Categories", cachedCategoryHeaderStyle);
-        EditorGUILayout.Space(GetResponsiveSpacing(4f));
-
-        EditorGUILayout.PropertyField(uiCategoriesProperty, GUIContent.none);
-        EditorGUILayout.Space(GetResponsiveSpacing(5f));
-
-        // Responsive action buttons
         DrawResponsiveActionButtons(
             new ResponsiveButton("Refresh All References", "Check and update all UI references",
                 () => { RefreshUIHierarchy(); CheckMissingReferences(); }),
@@ -1702,14 +1898,10 @@ public partial class UIManagerEditor : Editor
 
         EditorGUILayout.EndVertical();
 
-        // Enable Auto Standardization toggle - responsive spacing
-        EditorGUILayout.Space(GetResponsiveSpacing(8f));
-        DrawNamingStandardizationSettings();
-
         EditorGUILayout.Space(GetResponsiveSpacing(15f));
 
         // About section with responsive layout
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         int aboutHeaderFontSize = GetResponsiveFontSize(12, 11, 11);
 
@@ -1718,7 +1910,8 @@ public partial class UIManagerEditor : Editor
         cachedAboutHeaderStyle.alignment = TextAnchor.MiddleCenter;
         cachedAboutHeaderStyle.normal.textColor = new Color(0.8f, 0.8f, 0.9f);
 
-        EditorGUILayout.LabelField("About UI Framework", cachedAboutHeaderStyle);
+        Texture2D aboutIcon = EditorGUIUtility.IconContent("d_console.infoicon.sml").image as Texture2D;
+        EditorGUILayout.LabelField(new GUIContent(" About UI Framework", aboutIcon), cachedAboutHeaderStyle);
         EditorGUILayout.Space(GetResponsiveSpacing(4f));
 
         int versionFontSize = GetResponsiveFontSize(11, 10, 10);

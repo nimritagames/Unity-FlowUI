@@ -49,52 +49,31 @@ public partial class UIManagerEditor : Editor
         EditorGUILayout.Space(8);
         EditorGUILayout.BeginHorizontal();
 
-        // Search icon with status indicator
-        GUIContent searchContent = EditorGUIUtility.IconContent("Search Icon");
-
-        // Show spinner if currently searching
-        if (isSearching)
-        {
-            float time = (float)EditorApplication.timeSinceStartup;
-            int frame = Mathf.FloorToInt((time * 10) % 4);
-            string spinner = frame == 0 ? "◐" : frame == 1 ? "◓" : frame == 2 ? "◑" : "◒";
-
-            GUILayout.Label(spinner, GUILayout.Width(20), GUILayout.Height(20));
-        }
-        else if (searchContent != null && searchContent.image != null)
-        {
-            GUILayout.Label(searchContent, GUILayout.Width(20), GUILayout.Height(20));
-        }
-        else
-        {
-            GUILayout.Label("🔍", GUILayout.Width(20));
-        }
-
-        // Search field with improved styling
+        // Unified search field using Unity's built-in toolbar search style
         InitializeSearchCachedStyles();
-        cachedSearchFieldStyle.fixedHeight = 22;
 
         EditorGUI.BeginChangeCheck();
-        string newSearchQuery = EditorGUILayout.TextField(searchQuery, cachedSearchFieldStyle, GUILayout.ExpandWidth(true));
+        string newSearchQuery = GUILayout.TextField(searchQuery, "ToolbarSearchTextField");
         if (EditorGUI.EndChangeCheck())
         {
-            // Debounce search input
             searchQuery = newSearchQuery;
             lastSearchTime = (float)EditorApplication.timeSinceStartup;
             EditorApplication.update -= DelayedSearch;
             EditorApplication.update += DelayedSearch;
         }
 
-        // Clear button with better styling
-        cachedSearchClearBtnStyle.fixedHeight = 22;
-        if (GUILayout.Button(new GUIContent("Clear", "Clear search"), cachedSearchClearBtnStyle, GUILayout.Width(50)))
+        // Integrated cancel button (X) — uses Unity's native style that sits inside the search field
+        string cancelStyle = string.IsNullOrEmpty(searchQuery)
+            ? "ToolbarSearchCancelButtonEmpty"
+            : "ToolbarSearchCancelButton";
+        if (GUILayout.Button(GUIContent.none, cancelStyle))
         {
             if (!string.IsNullOrEmpty(searchQuery))
             {
                 searchQuery = string.Empty;
                 previousSearchQuery = string.Empty;
                 ClearSearchCache();
-                GUI.FocusControl(null); // Remove focus from search field
+                GUI.FocusControl(null);
                 Repaint();
             }
         }

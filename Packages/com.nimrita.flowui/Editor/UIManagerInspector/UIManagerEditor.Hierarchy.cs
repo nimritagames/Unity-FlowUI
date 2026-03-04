@@ -26,6 +26,9 @@ public partial class UIManagerEditor : Editor
     // Toggle for showing inactive elements
     private bool showInactiveElements = true;
 
+    // Collapsible actions section
+    private bool showQuickActions = false;
+
     // Phase 2: Hierarchy caching to avoid recalculation every frame
     private List<Canvas> cachedHierarchyCanvases = null;
     private int cachedCanvasesHierarchyHash = -1;
@@ -185,10 +188,16 @@ public partial class UIManagerEditor : Editor
         // Update hierarchy drawing
         UpdateHierarchyDrawing();
 
-        // Enhanced responsive sections
+        // Bulk add — one-time setup, collapsed by default
         EditorGUILayout.Space(GetAdaptiveSpacing(10f));
-        DrawEnhancedQuickActionButtons();
+        showQuickActions = EditorGUILayout.Foldout(showQuickActions, "Quick Add Elements", true);
+        if (showQuickActions)
+        {
+            EditorGUILayout.Space(GetAdaptiveSpacing(4f));
+            DrawEnhancedQuickActionButtons();
+        }
 
+        // Hierarchy controls — always visible for active browsing
         EditorGUILayout.Space(GetAdaptiveSpacing(10f));
         DrawEnhancedHierarchyControlButtons();
 
@@ -206,32 +215,7 @@ public partial class UIManagerEditor : Editor
     /// </summary>
     private void DrawEnhancedHierarchySearchBar()
     {
-        var extendedMode = GetExtendedResponsiveMode();
-
-        EditorGUILayout.BeginHorizontal();
-
-        // Adaptive search field width
-        float searchWidth = extendedMode switch
-        {
-            ExtendedResponsiveMode.ExtraSmall => -1f, // Full width
-            ExtendedResponsiveMode.Small => -1f,      // Full width
-            ExtendedResponsiveMode.Medium => 200f,
-            ExtendedResponsiveMode.Large => 250f,
-            ExtendedResponsiveMode.ExtraLarge => 300f,
-            _ => 200f
-        };
-
-        if (searchWidth > 0)
-        {
-            DrawHierarchySearchBar();
-            GUILayout.FlexibleSpace();
-        }
-        else
-        {
-            DrawHierarchySearchBar();
-        }
-
-        EditorGUILayout.EndHorizontal();
+        DrawHierarchySearchBar();
     }
 
     /// <summary>
@@ -401,23 +385,15 @@ public partial class UIManagerEditor : Editor
     }
 
     /// <summary>
-    /// Enhanced hierarchy control buttons with adaptive layout
+    /// Enhanced hierarchy control buttons with adaptive layout using DrawActionButton for consistency.
     /// </summary>
     private void DrawEnhancedHierarchyControlButtons()
     {
         var extendedMode = GetExtendedResponsiveMode();
 
-        float buttonHeight = GetAdaptiveRowHeight() - 4f;
-        int buttonFontSize = GetAdaptiveFontSize(11);
+        bool hasSelection = selectedUIElements.Count > 0;
 
-        // Use cached style
-        cachedHierarchyButtonStyle.fixedHeight = buttonHeight;
-        cachedHierarchyButtonStyle.fontSize = buttonFontSize;
-        cachedHierarchyButtonStyle.alignment = TextAnchor.MiddleCenter;
-        cachedHierarchyButtonStyle.padding = new RectOffset(4, 4, 2, 2);
-
-        var controlButtons = new[]
-        {
+        DrawResponsiveActionButtons(
             new ResponsiveButton(
                 extendedMode <= ExtendedResponsiveMode.Small ? "Refresh" : "Refresh Hierarchy",
                 "Refresh the UI hierarchy display",
@@ -436,28 +412,10 @@ public partial class UIManagerEditor : Editor
             new ResponsiveButton(
                 extendedMode <= ExtendedResponsiveMode.Small ? "Remove" : "Remove Selected",
                 "Remove selected UI elements from UI Manager",
-                () => RemoveSelectedReferences(),
+                () => { if (hasSelection) RemoveSelectedReferences(); },
                 false
             )
-        };
-
-        // Layout based on screen size
-        switch (extendedMode)
-        {
-            case ExtendedResponsiveMode.ExtraSmall:
-            case ExtendedResponsiveMode.Small:
-                DrawVerticalControlButtons(controlButtons, cachedHierarchyButtonStyle, buttonHeight);
-                break;
-
-            case ExtendedResponsiveMode.Medium:
-                DrawGridControlButtons(controlButtons, cachedHierarchyButtonStyle, 2);
-                break;
-
-            case ExtendedResponsiveMode.Large:
-            case ExtendedResponsiveMode.ExtraLarge:
-                DrawHorizontalControlButtons(controlButtons, cachedHierarchyButtonStyle);
-                break;
-        }
+        );
     }
 
     /// <summary>

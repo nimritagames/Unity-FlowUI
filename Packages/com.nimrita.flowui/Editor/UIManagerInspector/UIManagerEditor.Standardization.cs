@@ -1134,7 +1134,7 @@ public partial class UIManagerEditor : Editor
         // Naming Standardization section
         DrawSectionHeader("Naming Standardization", "Configure how UI element names are standardized for consistency");
 
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
         // Enable Auto Standardization toggle
         bool previousEnableAutoStandardization = namingSettings.EnableAutoStandardization;
@@ -1168,7 +1168,7 @@ public partial class UIManagerEditor : Editor
 
             // Example section to show naming preview with improved examples
             EditorGUILayout.Space(5);
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginVertical(GetDarkPanelStyle());
 
             cachedStdExampleHeaderMiniStyle.normal.textColor = new Color(0.7f, 0.8f, 0.9f);
 
@@ -1221,29 +1221,36 @@ public partial class UIManagerEditor : Editor
             // Action buttons
             EditorGUILayout.BeginHorizontal();
 
-            // Button to standardize all UI elements in the scene
-            if (GUILayout.Button("Standardize All UI Elements", GUILayout.Height(30)))
-            {
-                if (EditorUtility.DisplayDialog("Standardize All UI Elements",
-                    "This will rename all UI elements in the scene according to the standardization rules. Continue?",
-                    "Standardize All", "Cancel"))
+            // Button to standardize all UI elements in the scene — primary blue
+            Rect stdAllRect = GUILayoutUtility.GetRect(0, 30, GUILayout.ExpandWidth(true));
+            DrawActionButton(stdAllRect, "Standardize All UI Elements",
+                "Rename all UI elements according to standardization rules",
+                () =>
                 {
-                    StandardizeAllUIElements(true);
-                }
-            }
+                    if (EditorUtility.DisplayDialog("Standardize All UI Elements",
+                        "This will rename all UI elements in the scene according to the standardization rules. Continue?",
+                        "Standardize All", "Cancel"))
+                    {
+                        StandardizeAllUIElements(true);
+                    }
+                }, true);
 
-            // Button to restore original names
+            // Button to restore original names — secondary gray
             if (originalNames.Count > 0)
             {
-                if (GUILayout.Button("Restore Original Names", GUILayout.Height(30)))
-                {
-                    if (EditorUtility.DisplayDialog("Restore Original Names",
-                        "This will restore the original names of all UI elements that were standardized. Continue?",
-                        "Restore Names", "Cancel"))
+                GUILayout.Space(6);
+                Rect restoreRect = GUILayoutUtility.GetRect(0, 30, GUILayout.ExpandWidth(true));
+                DrawActionButton(restoreRect, "Restore Original Names",
+                    "Restore original names of standardized elements",
+                    () =>
                     {
-                        RestoreAllOriginalNames();
-                    }
-                }
+                        if (EditorUtility.DisplayDialog("Restore Original Names",
+                            "This will restore the original names of all UI elements that were standardized. Continue?",
+                            "Restore Names", "Cancel"))
+                        {
+                            RestoreAllOriginalNames();
+                        }
+                    });
             }
 
             EditorGUILayout.EndHorizontal();
